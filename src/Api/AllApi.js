@@ -1,7 +1,7 @@
 import axios from "axios";
 
-export const API_BASE = " http://localhost:3002/api/v1";
-// export const API_BASE = "https://fatendfit.codestoreapp.com/api/v1";
+// export const API_BASE = " http://localhost:3002/api/v1";
+export const API_BASE = "https://fatendfit.codestoreapp.com/api/v1";
 
 
 // Get auth headers from localStorage token
