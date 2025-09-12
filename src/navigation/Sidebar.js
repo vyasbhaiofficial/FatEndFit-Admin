@@ -1,0 +1,176 @@
+"use client";
+import { useState } from "react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import {
+  MdAssignment,
+  MdCategory,
+  MdChat,
+  MdDashboard,
+  MdDeviceHub,
+  MdPeople,
+  MdPerson,
+  MdVideoLibrary,
+} from "react-icons/md";
+import { MdChevronLeft, MdChevronRight } from "react-icons/md";
+import { FiMessageCircle } from "react-icons/fi";
+
+import { useAuth } from "../contexts/AuthContext";
+
+const Sidebar = () => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const pathname = usePathname();
+  const { role } = useAuth();
+
+  const linkClasses = (path) =>
+    `flex items-center ${
+      isCollapsed ? "justify-center" : "gap-3 px-3"
+    } py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+      pathname === path
+        ? "bg-yellow-400 text-black shadow-sm"
+        : "text-gray-700 hover:bg-yellow-100 hover:text-black"
+    }`;
+
+  return (
+    <aside
+      className={`${
+        isCollapsed ? "w-16" : "w-64"
+      } bg-white shadow-md border-r border-gray-200 flex flex-col h-screen transition-all duration-300`}
+    >
+      {/* Logo + Toggle */}
+      <div className="p-5 border-b border-gray-200 flex items-center justify-between">
+        {!isCollapsed ? (
+          <h1 className="text-xl font-extrabold text-gray-900 tracking-wide">
+            <span className="text-yellow-400">Fat</span>
+            <span className="text-black">Endfit</span>
+          </h1>
+        ) : (
+          <div className="w-8 h-8 bg-yellow-400 rounded-md" />
+        )}
+        <button
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          onClick={() => setIsCollapsed((v) => !v)}
+          className="ml-2 p-1 rounded-md hover:bg-yellow-100 text-gray-700"
+        >
+          {isCollapsed ? (
+            <MdChevronRight size={20} />
+          ) : (
+            <MdChevronLeft size={20} />
+          )}
+        </button>
+      </div>
+
+      {/* Navigation */}
+      <nav
+        className={`flex-1 flex flex-col gap-6 ${
+          isCollapsed ? "px-2" : "px-4"
+        } py-5 overflow-y-auto transition-all duration-300`}
+      >
+        {/* Section: Main */}
+        <div>
+          {!isCollapsed && (
+            <h2 className="text-xs font-semibold text-gray-400 uppercase mb-2">
+              Main
+            </h2>
+          )}
+          <Link href="/dashboard" className={linkClasses("/dashboard")}>
+            <MdDashboard size={20} />
+            {!isCollapsed && <span>Dashboard</span>}
+          </Link>
+          {role === "Admin" && (
+            <>
+              <Link
+                href="/component/branch"
+                className={linkClasses("/component/branch")}
+              >
+                <MdDeviceHub size={20} />
+                {!isCollapsed && <span>Branches</span>}
+              </Link>
+              {!isCollapsed && (
+                <h2 className="text-xs font-semibold text-gray-400 uppercase mb-2 mt-5">
+                  utils
+                </h2>
+              )}
+              <Link
+                href="/component/video"
+                className={linkClasses("/component/video")}
+              >
+                <MdVideoLibrary size={20} />
+                {!isCollapsed && <span>Videos</span>}
+              </Link>
+              <Link
+                href="/component/category"
+                className={linkClasses("/component/category")}
+              >
+                <MdCategory size={20} />
+                {!isCollapsed && <span>Categories</span>}
+              </Link>
+              <Link
+                href="/component/plan"
+                className={linkClasses("/component/plan")}
+              >
+                <MdAssignment size={20} />
+                {!isCollapsed && <span>Plans</span>}
+              </Link>
+            </>
+          )}
+        </div>
+
+        {/* Section: Management */}
+        {(role === "Admin" || role === "subadmin") && (
+          <>
+            <div>
+              {!isCollapsed && (
+                <h2 className="text-xs font-semibold text-gray-400 uppercase mb-2">
+                  Management
+                </h2>
+              )}
+              <Link
+                href="/component/users"
+                className={linkClasses("/component/users")}
+              >
+                <MdPeople size={20} />
+                {!isCollapsed && <span>Users</span>}
+              </Link>
+
+              {role === "Admin" && (
+                <Link
+                  href="/component/subadmin"
+                  className={linkClasses("/component/subadmin")}
+                >
+                  <MdPerson size={20} />
+                  {!isCollapsed && <span>SubAdmin</span>}
+                </Link>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Section: Communication (both roles) */}
+        <div>
+          {!isCollapsed && (
+            <h2 className="text-xs font-semibold text-gray-400 uppercase mb-2">
+              Communication
+            </h2>
+          )}
+          <Link
+            href="/component/userchat"
+            className={linkClasses("/component/userchat")}
+          >
+            <MdChat size={20} />
+            {!isCollapsed && <span>Supports</span>}
+          </Link>
+          <Link
+            href="/component/message"
+            className={linkClasses("/component/message")}
+          >
+            <FiMessageCircle size={20} />
+            {!isCollapsed && <span>Quick Replies</span>}
+          </Link>
+        </div>
+      </nav>
+    </aside>
+  );
+};
+
+export default Sidebar;
