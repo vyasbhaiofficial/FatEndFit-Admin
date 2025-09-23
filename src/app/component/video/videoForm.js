@@ -14,15 +14,32 @@ const VideoForm = ({
   submitLabel = "Create",
 }) => {
   const [form, setForm] = useState({
-    title: "",
+    // Multi-language titles
+    title_english: "",
+    title_gujarati: "",
+    title_hindi: "",
+    // Video settings
     videoType: 1, // 1=file, 2=url
-    videoFile: null,
-    videoUrl: "",
+    video_english: null,
+    video_gujarati: null,
+    video_hindi: null,
+    video_english_url: "",
+    video_gujarati_url: "",
+    video_hindi_url: "",
     videoSecond: "",
+    // Thumbnail settings
     thumbnailType: 1, // 1=file, 2=url
-    thumbnailFile: null,
-    thumbnailUrl: "",
-    description: "",
+    thumbnail_english: null,
+    thumbnail_gujarati: null,
+    thumbnail_hindi: null,
+    thumbnail_english_url: "",
+    thumbnail_gujarati_url: "",
+    thumbnail_hindi_url: "",
+    // Multi-language descriptions
+    description_english: "",
+    description_gujarati: "",
+    description_hindi: "",
+    // Other fields
     type: 1, // 1..5
     day: "",
     category: [],
@@ -34,20 +51,81 @@ const VideoForm = ({
     if (initialValues) {
       setForm((prev) => ({
         ...prev,
-        title: initialValues.title ?? "",
+        // Multi-language titles
+        title_english:
+          initialValues.titleMultiLang?.english ??
+          initialValues.title?.english ??
+          "",
+        title_gujarati:
+          initialValues.titleMultiLang?.gujarati ??
+          initialValues.title?.gujarati ??
+          "",
+        title_hindi:
+          initialValues.titleMultiLang?.hindi ??
+          initialValues.title?.hindi ??
+          "",
+        // Video settings
         videoType: initialValues.videoType ?? 1,
-        videoFile: null,
-        videoUrl:
-          initialValues.videoType === 2 ? initialValues.video ?? "" : "",
+        video_english: null,
+        video_gujarati: null,
+        video_hindi: null,
+        video_english_url:
+          initialValues.videoType === 2
+            ? initialValues.videoMultiLang?.english ??
+              initialValues.video?.english ??
+              ""
+            : "",
+        video_gujarati_url:
+          initialValues.videoType === 2
+            ? initialValues.videoMultiLang?.gujarati ??
+              initialValues.video?.gujarati ??
+              ""
+            : "",
+        video_hindi_url:
+          initialValues.videoType === 2
+            ? initialValues.videoMultiLang?.hindi ??
+              initialValues.video?.hindi ??
+              ""
+            : "",
         videoSecond:
           initialValues.videoType === 2 ? initialValues.videoSec ?? "" : "",
+        // Thumbnail settings
         thumbnailType: initialValues.thumbnailType ?? 1,
-        thumbnailFile: null,
-        thumbnailUrl:
+        thumbnail_english: null,
+        thumbnail_gujarati: null,
+        thumbnail_hindi: null,
+        thumbnail_english_url:
           initialValues.thumbnailType === 2
-            ? initialValues.thumbnail ?? ""
+            ? initialValues.thumbnailMultiLang?.english ??
+              initialValues.thumbnail?.english ??
+              ""
             : "",
-        description: initialValues.description ?? "",
+        thumbnail_gujarati_url:
+          initialValues.thumbnailType === 2
+            ? initialValues.thumbnailMultiLang?.gujarati ??
+              initialValues.thumbnail?.gujarati ??
+              ""
+            : "",
+        thumbnail_hindi_url:
+          initialValues.thumbnailType === 2
+            ? initialValues.thumbnailMultiLang?.hindi ??
+              initialValues.thumbnail?.hindi ??
+              ""
+            : "",
+        // Multi-language descriptions
+        description_english:
+          initialValues.descriptionMultiLang?.english ??
+          initialValues.description?.english ??
+          "",
+        description_gujarati:
+          initialValues.descriptionMultiLang?.gujarati ??
+          initialValues.description?.gujarati ??
+          "",
+        description_hindi:
+          initialValues.descriptionMultiLang?.hindi ??
+          initialValues.description?.hindi ??
+          "",
+        // Other fields
         type: initialValues.type ?? 1,
         day: initialValues.type === 1 ? initialValues.day ?? "" : "",
         category: Array.isArray(initialValues.category)
@@ -57,15 +135,27 @@ const VideoForm = ({
       setErrors({});
     } else {
       setForm({
-        title: "",
+        title_english: "",
+        title_gujarati: "",
+        title_hindi: "",
         videoType: 1,
-        videoFile: null,
-        videoUrl: "",
+        video_english: null,
+        video_gujarati: null,
+        video_hindi: null,
+        video_english_url: "",
+        video_gujarati_url: "",
+        video_hindi_url: "",
         videoSecond: "",
         thumbnailType: 1,
-        thumbnailFile: null,
-        thumbnailUrl: "",
-        description: "",
+        thumbnail_english: null,
+        thumbnail_gujarati: null,
+        thumbnail_hindi: null,
+        thumbnail_english_url: "",
+        thumbnail_gujarati_url: "",
+        thumbnail_hindi_url: "",
+        description_english: "",
+        description_gujarati: "",
+        description_hindi: "",
         type: 1,
         day: "",
         category: [],
@@ -96,28 +186,79 @@ const VideoForm = ({
     const videoTypeNum = Number(form.videoType);
     const thumbTypeNum = Number(form.thumbnailType);
     const typeNum = Number(form.type);
+
     const errs = validateForm({
-      title: { value: form.title, rules: [required("Title")] },
-      videoUrl: {
-        value: videoTypeNum === 2 ? form.videoUrl : "ok",
-        rules: [required("Video URL")],
+      // Multi-language title validation
+      title_english: {
+        value: form.title_english,
+        rules: [required("English Title")],
       },
-      videoFile: {
-        value: videoTypeNum === 1 ? form.videoFile : "ok",
-        rules: [required("Video file")],
+      title_gujarati: {
+        value: form.title_gujarati,
+        rules: [required("Gujarati Title")],
+      },
+      title_hindi: {
+        value: form.title_hindi,
+        rules: [required("Hindi Title")],
+      },
+
+      // Video validation
+      video_english_url: {
+        value: videoTypeNum === 2 ? form.video_english_url : "ok",
+        rules: [required("English Video URL")],
+      },
+      video_gujarati_url: {
+        value: videoTypeNum === 2 ? form.video_gujarati_url : "ok",
+        rules: [required("Gujarati Video URL")],
+      },
+      video_hindi_url: {
+        value: videoTypeNum === 2 ? form.video_hindi_url : "ok",
+        rules: [required("Hindi Video URL")],
+      },
+      video_english: {
+        value: videoTypeNum === 1 ? form.video_english : "ok",
+        rules: [required("English Video file")],
+      },
+      video_gujarati: {
+        value: videoTypeNum === 1 ? form.video_gujarati : "ok",
+        rules: [required("Gujarati Video file")],
+      },
+      video_hindi: {
+        value: videoTypeNum === 1 ? form.video_hindi : "ok",
+        rules: [required("Hindi Video file")],
       },
       videoSecond: {
         value: videoTypeNum === 2 ? form.videoSecond : "ok",
         rules: [required("Video seconds"), numberRule("Video seconds")],
       },
-      thumbnailUrl: {
-        value: thumbTypeNum === 2 ? form.thumbnailUrl : "ok",
-        rules: [required("Thumbnail URL")],
+
+      // Thumbnail validation
+      thumbnail_english_url: {
+        value: thumbTypeNum === 2 ? form.thumbnail_english_url : "ok",
+        rules: [required("English Thumbnail URL")],
       },
-      thumbnailFile: {
-        value: thumbTypeNum === 1 ? form.thumbnailFile : "ok",
-        rules: [required("Thumbnail file")],
+      thumbnail_gujarati_url: {
+        value: thumbTypeNum === 2 ? form.thumbnail_gujarati_url : "ok",
+        rules: [required("Gujarati Thumbnail URL")],
       },
+      thumbnail_hindi_url: {
+        value: thumbTypeNum === 2 ? form.thumbnail_hindi_url : "ok",
+        rules: [required("Hindi Thumbnail URL")],
+      },
+      thumbnail_english: {
+        value: thumbTypeNum === 1 ? form.thumbnail_english : "ok",
+        rules: [required("English Thumbnail file")],
+      },
+      thumbnail_gujarati: {
+        value: thumbTypeNum === 1 ? form.thumbnail_gujarati : "ok",
+        rules: [required("Gujarati Thumbnail file")],
+      },
+      thumbnail_hindi: {
+        value: thumbTypeNum === 1 ? form.thumbnail_hindi : "ok",
+        rules: [required("Hindi Thumbnail file")],
+      },
+
+      // Other validations
       type: { value: typeNum, rules: [required("Type")] },
       day: {
         value: typeNum === 1 ? form.day : "ok",
@@ -172,18 +313,83 @@ const VideoForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div>
-        <label className="block mb-1 font-semibold text-gray-700">Title</label>
-        <input
-          type="text"
-          value={form.title}
-          onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-          className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
-          placeholder="Enter title"
-        />
-        {errors.title && (
-          <p className="text-red-500 text-sm mt-1">{errors.title}</p>
-        )}
+      {/* Multi-language Title Section */}
+      <div className="bg-gradient-to-r from-yellow-50 to-amber-50 p-4 rounded-xl border border-yellow-200">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <svg
+            className="w-5 h-5 text-yellow-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h3a1 1 0 110 2h-1v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6H4a1 1 0 110-2h3zM9 6v10h6V6H9z"
+            />
+          </svg>
+          Video Title (Multi-Language)
+        </h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block mb-1 font-semibold text-gray-700">
+              English Title
+            </label>
+            <input
+              type="text"
+              value={form.title_english || ""}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, title_english: e.target.value }))
+              }
+              className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+              placeholder="Enter English title"
+            />
+            {errors.title_english && (
+              <p className="text-amber-600 text-sm mt-1">
+                {errors.title_english}
+              </p>
+            )}
+          </div>
+          <div>
+            <label className="block mb-1 font-semibold text-gray-700">
+              Gujarati Title
+            </label>
+            <input
+              type="text"
+              value={form.title_gujarati || ""}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, title_gujarati: e.target.value }))
+              }
+              className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+              placeholder="Enter Gujarati title"
+            />
+            {errors.title_gujarati && (
+              <p className="text-amber-600 text-sm mt-1">
+                {errors.title_gujarati}
+              </p>
+            )}
+          </div>
+          <div>
+            <label className="block mb-1 font-semibold text-gray-700">
+              Hindi Title
+            </label>
+            <input
+              type="text"
+              value={form.title_hindi || ""}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, title_hindi: e.target.value }))
+              }
+              className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+              placeholder="Enter Hindi title"
+            />
+            {errors.title_hindi && (
+              <p className="text-amber-600 text-sm mt-1">
+                {errors.title_hindi}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -195,8 +401,12 @@ const VideoForm = ({
             setForm((f) => ({
               ...f,
               videoType: v,
-              videoFile: null,
-              videoUrl: "",
+              video_english: null,
+              video_gujarati: null,
+              video_hindi: null,
+              video_english_url: "",
+              video_gujarati_url: "",
+              video_hindi_url: "",
               videoSecond: "",
             }))
           }
@@ -209,107 +419,352 @@ const VideoForm = ({
             setForm((f) => ({
               ...f,
               thumbnailType: v,
-              thumbnailFile: null,
-              thumbnailUrl: "",
+              thumbnail_english: null,
+              thumbnail_gujarati: null,
+              thumbnail_hindi: null,
+              thumbnail_english_url: "",
+              thumbnail_gujarati_url: "",
+              thumbnail_hindi_url: "",
             }))
           }
         />
       </div>
 
-      {Number(form.videoType) === 1 ? (
-        <div>
-          <label className="block mb-1 font-semibold text-gray-700">
-            Video File
-          </label>
-          <input
-            type="file"
-            accept="video/*"
-            onChange={(e) =>
-              setForm((f) => ({ ...f, videoFile: e.target.files?.[0] || null }))
-            }
-            className="w-full border border-yellow-400 rounded-xl p-2 bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
-          />
-          {errors.videoFile && (
-            <p className="text-red-500 text-sm mt-1">{errors.videoFile}</p>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-3 gap-3">
-          <div className="col-span-2">
-            <label className="block mb-1 font-semibold text-gray-700">
-              Video URL
-            </label>
-            <input
-              type="text"
-              value={form.videoUrl ?? ""}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, videoUrl: e.target.value }))
-              }
-              className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
-              placeholder="https://..."
+      {/* Multi-language Video Section */}
+      <div className="bg-gradient-to-r from-amber-50 to-yellow-50 p-4 rounded-xl border border-amber-200">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <svg
+            className="w-5 h-5 text-amber-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
             />
-            {errors.videoUrl && (
-              <p className="text-red-500 text-sm mt-1">{errors.videoUrl}</p>
-            )}
-          </div>
-          <div>
-            <label className="block mb-1 font-semibold text-gray-700">
-              Seconds
-            </label>
-            <input
-              type="text"
-              value={form.videoSecond ?? ""}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, videoSecond: e.target.value }))
-              }
-              className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
-            />
-            {errors.videoSecond && (
-              <p className="text-red-500 text-sm mt-1">{errors.videoSecond}</p>
-            )}
-          </div>
-        </div>
-      )}
+          </svg>
+          Video Files (Multi-Language)
+        </h3>
 
-      {Number(form.thumbnailType) === 1 ? (
-        <div>
-          <label className="block mb-1 font-semibold text-gray-700">
-            Thumbnail File
-          </label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) =>
-              setForm((f) => ({
-                ...f,
-                thumbnailFile: e.target.files?.[0] || null,
-              }))
-            }
-            className="w-full border border-yellow-400 rounded-xl p-2 bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
-          />
-          {errors.thumbnailFile && (
-            <p className="text-red-500 text-sm mt-1">{errors.thumbnailFile}</p>
-          )}
-        </div>
-      ) : (
-        <div>
-          <label className="block mb-1 font-semibold text-gray-700">
-            Thumbnail URL
-          </label>
-          <input
-            type="text"
-            value={form.thumbnailUrl ?? ""}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, thumbnailUrl: e.target.value }))
-            }
-            className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
-            placeholder="https://..."
-          />
-          {errors.thumbnailUrl && (
-            <p className="text-red-500 text-sm mt-1">{errors.thumbnailUrl}</p>
-          )}
-        </div>
-      )}
+        {Number(form.videoType) === 1 ? (
+          <div className="space-y-4">
+            <div>
+              <label className="block mb-1 font-semibold text-gray-700">
+                English Video File
+              </label>
+              <input
+                type="file"
+                accept="video/*"
+                key={`video_english_${form.videoType}`}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    video_english: e.target.files?.[0] || null,
+                  }))
+                }
+                className="w-full border border-yellow-400 rounded-xl p-2 bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+              />
+              {errors.video_english && (
+                <p className="text-amber-600 text-sm mt-1">
+                  {errors.video_english}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block mb-1 font-semibold text-gray-700">
+                Gujarati Video File
+              </label>
+              <input
+                type="file"
+                accept="video/*"
+                key={`video_gujarati_${form.videoType}`}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    video_gujarati: e.target.files?.[0] || null,
+                  }))
+                }
+                className="w-full border border-yellow-400 rounded-xl p-2 bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+              />
+              {errors.video_gujarati && (
+                <p className="text-amber-600 text-sm mt-1">
+                  {errors.video_gujarati}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block mb-1 font-semibold text-gray-700">
+                Hindi Video File
+              </label>
+              <input
+                type="file"
+                accept="video/*"
+                key={`video_hindi_${form.videoType}`}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    video_hindi: e.target.files?.[0] || null,
+                  }))
+                }
+                className="w-full border border-yellow-400 rounded-xl p-2 bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+              />
+              {errors.video_hindi && (
+                <p className="text-amber-600 text-sm mt-1">
+                  {errors.video_hindi}
+                </p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="block mb-1 font-semibold text-gray-700">
+                English Video URL
+              </label>
+              <input
+                type="text"
+                value={form.video_english_url || ""}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    video_english_url: e.target.value,
+                  }))
+                }
+                className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+                placeholder="https://..."
+              />
+              {errors.video_english_url && (
+                <p className="text-amber-600 text-sm mt-1">
+                  {errors.video_english_url}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block mb-1 font-semibold text-gray-700">
+                Gujarati Video URL
+              </label>
+              <input
+                type="text"
+                value={form.video_gujarati_url || ""}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    video_gujarati_url: e.target.value,
+                  }))
+                }
+                className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+                placeholder="https://..."
+              />
+              {errors.video_gujarati_url && (
+                <p className="text-amber-600 text-sm mt-1">
+                  {errors.video_gujarati_url}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block mb-1 font-semibold text-gray-700">
+                Hindi Video URL
+              </label>
+              <input
+                type="text"
+                value={form.video_hindi_url || ""}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, video_hindi_url: e.target.value }))
+                }
+                className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+                placeholder="https://..."
+              />
+              {errors.video_hindi_url && (
+                <p className="text-amber-600 text-sm mt-1">
+                  {errors.video_hindi_url}
+                </p>
+              )}
+            </div>
+            <div className="max-w-xs">
+              <label className="block mb-1 font-semibold text-gray-700">
+                Video Duration (Seconds)
+              </label>
+              <input
+                type="text"
+                value={form.videoSecond || ""}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, videoSecond: e.target.value }))
+                }
+                className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+                placeholder="120"
+              />
+              {errors.videoSecond && (
+                <p className="text-amber-600 text-sm mt-1">
+                  {errors.videoSecond}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Multi-language Thumbnail Section */}
+      <div className="bg-gradient-to-r from-yellow-50 to-amber-50 p-4 rounded-xl border border-yellow-200">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <svg
+            className="w-5 h-5 text-yellow-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
+          </svg>
+          Thumbnail Images (Multi-Language)
+        </h3>
+
+        {Number(form.thumbnailType) === 1 ? (
+          <div className="space-y-4">
+            <div>
+              <label className="block mb-1 font-semibold text-gray-700">
+                English Thumbnail File
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                key={`thumbnail_english_${form.thumbnailType}`}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    thumbnail_english: e.target.files?.[0] || null,
+                  }))
+                }
+                className="w-full border border-yellow-400 rounded-xl p-2 bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+              />
+              {errors.thumbnail_english && (
+                <p className="text-amber-600 text-sm mt-1">
+                  {errors.thumbnail_english}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block mb-1 font-semibold text-gray-700">
+                Gujarati Thumbnail File
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                key={`thumbnail_gujarati_${form.thumbnailType}`}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    thumbnail_gujarati: e.target.files?.[0] || null,
+                  }))
+                }
+                className="w-full border border-yellow-400 rounded-xl p-2 bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+              />
+              {errors.thumbnail_gujarati && (
+                <p className="text-amber-600 text-sm mt-1">
+                  {errors.thumbnail_gujarati}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block mb-1 font-semibold text-gray-700">
+                Hindi Thumbnail File
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                key={`thumbnail_hindi_${form.thumbnailType}`}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    thumbnail_hindi: e.target.files?.[0] || null,
+                  }))
+                }
+                className="w-full border border-yellow-400 rounded-xl p-2 bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+              />
+              {errors.thumbnail_hindi && (
+                <p className="text-amber-600 text-sm mt-1">
+                  {errors.thumbnail_hindi}
+                </p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="block mb-1 font-semibold text-gray-700">
+                English Thumbnail URL
+              </label>
+              <input
+                type="text"
+                value={form.thumbnail_english_url || ""}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    thumbnail_english_url: e.target.value,
+                  }))
+                }
+                className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+                placeholder="https://..."
+              />
+              {errors.thumbnail_english_url && (
+                <p className="text-amber-600 text-sm mt-1">
+                  {errors.thumbnail_english_url}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block mb-1 font-semibold text-gray-700">
+                Gujarati Thumbnail URL
+              </label>
+              <input
+                type="text"
+                value={form.thumbnail_gujarati_url || ""}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    thumbnail_gujarati_url: e.target.value,
+                  }))
+                }
+                className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+                placeholder="https://..."
+              />
+              {errors.thumbnail_gujarati_url && (
+                <p className="text-amber-600 text-sm mt-1">
+                  {errors.thumbnail_gujarati_url}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block mb-1 font-semibold text-gray-700">
+                Hindi Thumbnail URL
+              </label>
+              <input
+                type="text"
+                value={form.thumbnail_hindi_url || ""}
+                onChange={(e) =>
+                  setForm((f) => ({
+                    ...f,
+                    thumbnail_hindi_url: e.target.value,
+                  }))
+                }
+                className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+                placeholder="https://..."
+              />
+              {errors.thumbnail_hindi_url && (
+                <p className="text-amber-600 text-sm mt-1">
+                  {errors.thumbnail_hindi_url}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
 
       <div>
         <label className="block mb-1 font-semibold text-gray-700">Type</label>
@@ -332,7 +787,7 @@ const VideoForm = ({
             placeholder="1"
           />
           {errors.day && (
-            <p className="text-red-500 text-sm mt-1">{errors.day}</p>
+            <p className="text-amber-600 text-sm mt-1">{errors.day}</p>
           )}
         </div>
       )}
@@ -350,23 +805,73 @@ const VideoForm = ({
             placeholder="Select category"
           />
           {errors.category && (
-            <p className="text-red-500 text-sm mt-1">{errors.category}</p>
+            <p className="text-amber-600 text-sm mt-1">{errors.category}</p>
           )}
         </div>
       )}
 
-      <div>
-        <label className="block mb-1 font-semibold text-gray-700">
-          Description
-        </label>
-        <textarea
-          value={form.description}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, description: e.target.value }))
-          }
-          className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
-          rows={3}
-        />
+      {/* Multi-language Description Section */}
+      <div className="bg-gradient-to-r from-amber-50 to-yellow-50 p-4 rounded-xl border border-amber-200">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+          <svg
+            className="w-5 h-5 text-amber-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+          Video Description (Multi-Language)
+        </h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block mb-1 font-semibold text-gray-700">
+              English Description
+            </label>
+            <textarea
+              value={form.description_english || ""}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, description_english: e.target.value }))
+              }
+              className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+              rows={3}
+              placeholder="Enter English description"
+            />
+          </div>
+          <div>
+            <label className="block mb-1 font-semibold text-gray-700">
+              Gujarati Description
+            </label>
+            <textarea
+              value={form.description_gujarati || ""}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, description_gujarati: e.target.value }))
+              }
+              className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+              rows={3}
+              placeholder="Enter Gujarati description"
+            />
+          </div>
+          <div>
+            <label className="block mb-1 font-semibold text-gray-700">
+              Hindi Description
+            </label>
+            <textarea
+              value={form.description_hindi || ""}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, description_hindi: e.target.value }))
+              }
+              className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
+              rows={3}
+              placeholder="Enter Hindi description"
+            />
+          </div>
+        </div>
       </div>
 
       <div className="flex justify-end gap-3 mt-6">

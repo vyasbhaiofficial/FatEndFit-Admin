@@ -6,6 +6,7 @@ import Drawer from "@/utils/formanimation";
 import { createUserApi, getAllUsers, updateUserById } from "@/Api/AllApi";
 import UserForm from "./UserForm";
 import UserList from "./UserList";
+import SearchComponent from "@/components/SearchComponent";
 import toast from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -16,11 +17,14 @@ const UsersPage = () => {
   const [listLoading, setListLoading] = useState(true);
   const [error, setError] = useState("");
   const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [editing, setEditing] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   const fetchList = async () => {
     try {
       setListLoading(true);
+      let userData = [];
       if (role === "subadmin") {
         const branchIds = Array.isArray(branches) ? branches : [];
         const chunks = await Promise.all(
@@ -28,12 +32,13 @@ const UsersPage = () => {
             import("@/Api/AllApi").then((m) => m.getUsersByBranch(id))
           )
         );
-        const merged = chunks.flat();
-        setUsers(merged);
+        userData = chunks.flat();
       } else {
         const data = await getAllUsers();
-        setUsers(Array.isArray(data) ? data : []);
+        userData = Array.isArray(data) ? data : [];
       }
+      setUsers(userData);
+      setFilteredUsers(userData);
     } catch (e) {
       setError(e?.response?.data?.message || "Failed to load users");
       toast.error(e?.response?.data?.message || "Failed to load users");
@@ -45,6 +50,32 @@ const UsersPage = () => {
   useEffect(() => {
     fetchList();
   }, []);
+
+  const handleSearch = (searchTerm) => {
+    setSearchLoading(true);
+
+    if (!searchTerm) {
+      setFilteredUsers(users);
+      setSearchLoading(false);
+      return;
+    }
+
+    const term = searchTerm.toLowerCase();
+    const filtered = users.filter((user) => {
+      // Search across all fields
+      return (
+        user.name?.toLowerCase().includes(term) ||
+        user.patientId?.toString().includes(term) ||
+        user.mobileNumber?.includes(term) ||
+        `${user.mobilePrefix}${user.mobileNumber}`.includes(term) ||
+        user.branch?.name?.toLowerCase().includes(term) ||
+        user.plan?.name?.toLowerCase().includes(term)
+      );
+    });
+
+    setFilteredUsers(filtered);
+    setSearchLoading(false);
+  };
 
   const handleSubmit = async (formData) => {
     try {
@@ -108,8 +139,16 @@ const UsersPage = () => {
           </div>
         )}
 
+        <SearchComponent onSearch={handleSearch} loading={searchLoading} />
+
+        {!listLoading && (
+          <div className="mb-4 text-sm text-gray-600">
+            Showing {filteredUsers.length} of {users.length} users
+          </div>
+        )}
+
         <UserList
-          users={users}
+          users={filteredUsers}
           loading={listLoading}
           onEdit={handleEdit}
           onDelete={handleDelete}

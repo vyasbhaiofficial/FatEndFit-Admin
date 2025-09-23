@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import Loader from "@/utils/loader";
 import NotFoundCard from "@/components/NotFoundCard";
 import { ActionButton } from "@/utils/actionbutton";
@@ -36,111 +36,361 @@ const VideoTable = ({ items, loading, onEdit, onDelete }) => {
     );
   }
 
+  // Helper function to get text in specific language
+  const getTextInLanguage = (multiLangObj, language = "english") => {
+    if (!multiLangObj) {
+      return "";
+    }
+
+    // If it's already a string (old format), return it
+    if (typeof multiLangObj === "string") {
+      return multiLangObj;
+    }
+
+    // If it's an object (new multi-language format), get the specific language
+    if (typeof multiLangObj === "object") {
+      return multiLangObj[language] || multiLangObj.english || "";
+    }
+
+    return "";
+  };
+
   return (
-    <div className="overflow-x-auto shadow-md rounded-2xl border border-gray-200 bg-white">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gradient-to-r from-yellow-400 to-amber-300">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Thumbnail
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Video
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Title
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Type
-            </th>
-            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Category
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Duration
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Size (MB)
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Updated
-            </th>
-            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {items.length > 0 ? (
-            items.map((v) => (
-              <tr
-                key={v._id}
-                className="hover:bg-yellow-50 transition-all duration-200 cursor-pointer"
-              >
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {v.thumbnail ? (
-                    <img
-                      src={toAbsolute(v.thumbnail)}
-                      alt={v.title}
-                      className="w-16 h-10 object-cover rounded"
-                    />
-                  ) : (
-                    <span className="text-gray-400 text-sm">-</span>
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                  {v.video ? (
-                    <video
-                      src={toAbsolute(v.video)}
-                      controls
-                      className="w-32 h-20 rounded border object-cover"
-                    />
-                  ) : (
-                    <span className="text-gray-400 text-sm">-</span>
-                  )}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-800">
-                  {v.title}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                  {v.type}
-                </td>
+    <div className="space-y-6">
+      {/* Video Cards - Each video shows all 3 languages */}
+      {items.length > 0 ? (
+        items.map((video) => (
+          <div
+            key={video._id}
+            className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300"
+          >
+            {/* Video Header */}
+            <div className="bg-gradient-to-r from-yellow-400 to-amber-300 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+                    <svg
+                      className="w-6 h-6 text-yellow-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-800">
+                      Video Details
+                    </h3>
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <span>Type: {video.type}</span>
+                      <span>Day: {video.day || "N/A"}</span>
+                      <span>Duration: {video.videoSec || 0}s</span>
+                      <span>Size: {video.videoSize || 0} MB</span>
+                      {video.category && (
+                        <span>Category: {video.category.categoryTitle}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <ActionButton type="edit" onClick={() => onEdit(video)} />
+                  <ActionButton
+                    type="delete"
+                    onClick={() => onDelete(video._id)}
+                  />
+                </div>
+              </div>
+            </div>
 
-                <td className="px-6 py-4 whitespace-nowrap text-gray-700 text-center">
-                  {v.category && v.category.categoryTitle
-                    ? v.category.categoryTitle
-                    : "-"}
-                </td>
+            {/* Multi-Language Content - Horizontal Layout */}
+            <div className="p-6 space-y-6">
+              {/* English Row */}
+              <div className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-xl p-4 border border-yellow-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
+                    <span className="text-xs font-bold text-white">E</span>
+                  </div>
+                  <h4 className="text-sm font-semibold text-gray-700">
+                    English
+                  </h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {/* Thumbnail */}
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 mb-2">
+                      Thumbnail
+                    </p>
+                    {getTextInLanguage(
+                      video.thumbnailMultiLang || video.thumbnail,
+                      "english"
+                    ) ? (
+                      <img
+                        src={toAbsolute(
+                          getTextInLanguage(
+                            video.thumbnailMultiLang || video.thumbnail,
+                            "english"
+                          )
+                        )}
+                        alt="English thumbnail"
+                        className="w-full h-40 object-cover rounded-xl border border-yellow-200"
+                      />
+                    ) : (
+                      <div className="w-full h-20 bg-gray-200 rounded flex items-center justify-center border border-yellow-200">
+                        <span className="text-gray-400 text-xs">No Image</span>
+                      </div>
+                    )}
+                  </div>
 
-                <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                  {typeof v.videoSec !== "undefined" ? `${v.videoSec}s` : "-"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                  {typeof v.videoSize !== "undefined" ? v.videoSize : "-"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                  {v.updatedAt
-                    ? new Date(v.updatedAt).toLocaleDateString()
-                    : "-"}
-                </td>
-                <td className="px-6 py-4 text-center space-x-2">
-                  <ActionButton type="edit" onClick={() => onEdit(v)} />
-                  <ActionButton type="delete" onClick={() => onDelete(v._id)} />
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td
-                className="px-6 py-4 text-center text-gray-500 text-sm"
-                colSpan={8}
-              >
-                No Videos
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+                  {/* Video */}
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 mb-2">
+                      Video
+                    </p>
+                    {getTextInLanguage(
+                      video.videoMultiLang || video.video,
+                      "english"
+                    ) ? (
+                      <video
+                        src={toAbsolute(
+                          getTextInLanguage(
+                            video.videoMultiLang || video.video,
+                            "english"
+                          )
+                        )}
+                        controls
+                        className="w-full h-40 rounded-xl border border-yellow-200 object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-20 bg-gray-200 rounded flex items-center justify-center border border-yellow-200">
+                        <span className="text-gray-400 text-xs">No Video</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Title */}
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 mb-2">
+                      Title
+                    </p>
+                    <p className="text-sm font-semibold text-gray-800 bg-white h-40 text-center p-2 rounded-md border border-yellow-200">
+                      {getTextInLanguage(
+                        video.titleMultiLang || video.title,
+                        "english"
+                      )}
+                    </p>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 mb-2">
+                      Description
+                    </p>
+                    <p className="text-sm text-gray-700 bg-white p-2 h-40 text-center rounded-md border border-amber-200 overflow-y-auto">
+                      {getTextInLanguage(
+                        video.descriptionMultiLang || video.description,
+                        "english"
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Gujarati Row */}
+              <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl p-4 border border-amber-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-6 h-6 bg-amber-500 rounded-full flex items-center justify-center">
+                    <span className="text-xs font-bold text-white">G</span>
+                  </div>
+                  <h4 className="text-sm font-semibold text-gray-700">
+                    Gujarati
+                  </h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {/* Thumbnail */}
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 mb-2">
+                      Thumbnail
+                    </p>
+                    {getTextInLanguage(
+                      video.thumbnailMultiLang || video.thumbnail,
+                      "gujarati"
+                    ) ? (
+                      <img
+                        src={toAbsolute(
+                          getTextInLanguage(
+                            video.thumbnailMultiLang || video.thumbnail,
+                            "gujarati"
+                          )
+                        )}
+                        alt="Gujarati thumbnail"
+                        className="w-full h-40 object-cover rounded-xl border border-amber-200"
+                      />
+                    ) : (
+                      <div className="w-full h-20 bg-gray-200 rounded flex items-center justify-center border border-amber-200">
+                        <span className="text-gray-400 text-xs">No Image</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Video */}
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 mb-2">
+                      Video
+                    </p>
+                    {getTextInLanguage(
+                      video.videoMultiLang || video.video,
+                      "gujarati"
+                    ) ? (
+                      <video
+                        src={toAbsolute(
+                          getTextInLanguage(
+                            video.videoMultiLang || video.video,
+                            "gujarati"
+                          )
+                        )}
+                        controls
+                        className="w-full h-40 rounded-xl border border-amber-200 object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-20 bg-gray-200 rounded flex items-center justify-center border border-amber-200">
+                        <span className="text-gray-400 text-xs">No Video</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Title */}
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 mb-2">
+                      Title
+                    </p>
+                    <p className="text-sm font-semibold  h-40 text-center text-gray-800 bg-white p-2 rounded-md border border-amber-200">
+                      {getTextInLanguage(
+                        video.titleMultiLang || video.title,
+                        "gujarati"
+                      )}
+                    </p>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 mb-2">
+                      Description
+                    </p>
+                    <p className="text-sm text-gray-700 bg-white p-2  h-40 text-center rounded-md border border-amber-200 overflow-y-auto">
+                      {getTextInLanguage(
+                        video.descriptionMultiLang || video.description,
+                        "gujarati"
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hindi Row */}
+              <div className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-xl p-4 border border-yellow-200">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-6 h-6 bg-yellow-600 rounded-full flex items-center justify-center">
+                    <span className="text-xs font-bold text-white">H</span>
+                  </div>
+                  <h4 className="text-sm font-semibold text-gray-700">Hindi</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {/* Thumbnail */}
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 mb-2">
+                      Thumbnail
+                    </p>
+                    {getTextInLanguage(
+                      video.thumbnailMultiLang || video.thumbnail,
+                      "hindi"
+                    ) ? (
+                      <img
+                        src={toAbsolute(
+                          getTextInLanguage(
+                            video.thumbnailMultiLang || video.thumbnail,
+                            "hindi"
+                          )
+                        )}
+                        alt="Hindi thumbnail"
+                        className="w-full h-40 object-cover rounded-xl border border-yellow-200"
+                      />
+                    ) : (
+                      <div className="w-full h-20 bg-gray-200 rounded flex items-center justify-center border border-yellow-200">
+                        <span className="text-gray-400 text-xs">No Image</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Video */}
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 mb-2">
+                      Video
+                    </p>
+                    {getTextInLanguage(
+                      video.videoMultiLang || video.video,
+                      "hindi"
+                    ) ? (
+                      <video
+                        src={toAbsolute(
+                          getTextInLanguage(
+                            video.videoMultiLang || video.video,
+                            "hindi"
+                          )
+                        )}
+                        controls
+                        className="w-full h-40 rounded-xl border border-yellow-200 object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-20 bg-gray-200 rounded flex items-center justify-center border border-yellow-200">
+                        <span className="text-gray-400 text-xs">No Video</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Title */}
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 mb-2">
+                      Title
+                    </p>
+                    <p className="text-sm font-semibold text-gray-800 bg-white  h-40 text-center p-2 rounded-md border border-yellow-200">
+                      {getTextInLanguage(
+                        video.titleMultiLang || video.title,
+                        "hindi"
+                      )}
+                    </p>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <p className="text-xs font-medium text-gray-600 mb-2">
+                      Description
+                    </p>
+                    <p className="text-sm text-gray-700 bg-white p-2 rounded-md border  h-40 text-center border-yellow-200 h-20 overflow-y-auto">
+                      {getTextInLanguage(
+                        video.descriptionMultiLang || video.description,
+                        "hindi"
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))
+      ) : (
+        <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-8 text-center">
+          <NotFoundCard
+            title="No Videos"
+            subtitle="Upload a video to get started."
+          />
+        </div>
+      )}
     </div>
   );
 };

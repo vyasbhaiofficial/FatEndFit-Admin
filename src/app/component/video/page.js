@@ -20,7 +20,6 @@ const VideoPage = () => {
   const [error, setError] = useState("");
   const [videos, setVideos] = useState([]);
   const [editing, setEditing] = useState(null);
-
   const fetchList = async () => {
     try {
       setListLoading(true);
@@ -89,7 +88,7 @@ const VideoPage = () => {
         </div>
 
         {error && (
-          <div className="mb-3 p-3 rounded-lg bg-red-50 text-red-600 border border-red-200">
+          <div className="mb-3 p-3 rounded-lg bg-amber-50 text-amber-600 border border-amber-200">
             {error}
           </div>
         )}

@@ -4,7 +4,14 @@ import { useParams, useRouter } from "next/navigation";
 import RoleGuard from "@/components/RoleGuard";
 import { Header, Button } from "@/utils/header";
 import Loader from "@/utils/loader";
-import { API_BASE, getUserOverview } from "@/Api/AllApi";
+import {
+  API_BASE,
+  getUserOverview,
+  holdUserPlan,
+  resumeUserPlan,
+} from "@/Api/AllApi";
+import ConfirmationDialog from "@/components/ConfirmationDialog";
+import toast from "react-hot-toast";
 
 const UserProfilePage = () => {
   const params = useParams();
@@ -15,6 +22,14 @@ const UserProfilePage = () => {
   const [overview, setOverview] = useState(null);
   const [selectedDay, setSelectedDay] = useState(null); // for popup
   const [closing, setClosing] = useState(false);
+  const [planActionLoading, setPlanActionLoading] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "warning",
+    onConfirm: null,
+  });
 
   useEffect(() => {
     const load = async () => {
@@ -45,6 +60,151 @@ const UserProfilePage = () => {
     const report =
       overview?.dailyReports?.find((r) => r.day === dayObj.day) || {};
     setSelectedDay({ ...dayObj, answers: report.answers || [] });
+  };
+
+  // Plan management functions
+  const handleHoldPlan = () => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Hold Plan",
+      message: `Are you sure you want to HOLD the plan for ${overview.user?.name}? This will pause their current plan progress.`,
+      type: "warning",
+      onConfirm: async () => {
+        try {
+          setPlanActionLoading(true);
+          await holdUserPlan(userId);
+
+          // Update local state immediately
+          setOverview((prev) => ({
+            ...prev,
+            user: {
+              ...prev.user,
+              planHoldDate: new Date().toISOString().split("T")[0],
+              planResumeDate: null,
+            },
+          }));
+
+          toast.success(`Plan held successfully for ${overview.user?.name}!`);
+        } catch (err) {
+          toast.error(err?.response?.data?.message || "Failed to hold plan");
+        } finally {
+          setPlanActionLoading(false);
+          setConfirmDialog({
+            isOpen: false,
+            title: "",
+            message: "",
+            type: "warning",
+            onConfirm: null,
+          });
+        }
+      },
+    });
+  };
+
+  const handleResumePlan = () => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Resume Plan",
+      message: `Are you sure you want to RESUME the plan for ${overview.user?.name}? This will continue their plan from where it was held.`,
+      type: "success",
+      onConfirm: async () => {
+        try {
+          setPlanActionLoading(true);
+          await resumeUserPlan(userId);
+
+          // Update local state immediately
+          setOverview((prev) => ({
+            ...prev,
+            user: {
+              ...prev.user,
+              planResumeDate: new Date().toISOString().split("T")[0],
+              planCurrentDay: (prev.user.planCurrentDay || 0) + 1,
+              planCurrentDate: new Date().toISOString().split("T")[0],
+            },
+          }));
+
+          toast.success(
+            `Plan resumed successfully for ${overview.user?.name}!`
+          );
+        } catch (err) {
+          toast.error(err?.response?.data?.message || "Failed to resume plan");
+        } finally {
+          setPlanActionLoading(false);
+          setConfirmDialog({
+            isOpen: false,
+            title: "",
+            message: "",
+            type: "warning",
+            onConfirm: null,
+          });
+        }
+      },
+    });
+  };
+
+  // Get plan status
+  const getPlanStatus = () => {
+    if (!overview?.user?.activated || !overview?.user?.plan) {
+      return {
+        status: "No Plan",
+        color: "bg-gray-100 text-gray-800",
+        icon: (
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        ),
+      };
+    }
+    if (overview.user.planHoldDate && !overview.user.planResumeDate) {
+      return {
+        status: "Hold",
+        color: "bg-amber-100 text-amber-800",
+        icon: (
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        ),
+      };
+    }
+    return {
+      status: "Active",
+      color: "bg-amber-300 text-yellow-800",
+      icon: (
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      ),
+    };
   };
 
   return (
@@ -133,6 +293,216 @@ const UserProfilePage = () => {
                 </div>
               </div>
             </div>
+
+            {/* ------------------ Plan Management Section ------------------ */}
+            {overview?.user?.plan && (
+              <div className="p-8 mx-8 bg-white rounded-2xl shadow-lg border border-gray-200">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-4">
+                    <h3 className="text-2xl font-bold text-gray-800">
+                      Plan Management
+                    </h3>
+                    <span
+                      className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${
+                        getPlanStatus().color
+                      }`}
+                    >
+                      <span className="mr-2">{getPlanStatus().icon}</span>
+                      {getPlanStatus().status}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Plan Details Card */}
+                  <div className="bg-gradient-to-br from-yellow-50 to-amber-100 rounded-xl p-6 border border-yellow-200">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center">
+                        <svg
+                          className="w-5 h-5 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-800">
+                          Current Plan
+                        </h4>
+                        <p className="text-sm text-gray-600">
+                          {overview.user.plan.name}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Current Day:</span>
+                        <span className="font-semibold text-gray-800">
+                          {overview.user.planCurrentDay || 0}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Status:</span>
+                        <span
+                          className={`font-semibold ${getPlanStatus()
+                            .color.replace("bg-", "text-")
+                            .replace("-100", "-800")}`}
+                        >
+                          {getPlanStatus().status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Plan History Card */}
+                  <div className="bg-gradient-to-br from-yellow-50 to-amber-100 rounded-xl p-6 border border-amber-200">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-amber-400 rounded-full flex items-center justify-center">
+                        <svg
+                          className="w-5 h-5 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-800">
+                          Plan History
+                        </h4>
+                        <p className="text-sm text-gray-600">
+                          Hold & Resume Dates
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {overview.user.planHoldDate && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Hold Date:</span>
+                          <span className="font-semibold text-amber-600">
+                            {new Date(
+                              overview.user.planHoldDate
+                            ).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                      {overview.user.planResumeDate && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Resume Date:</span>
+                          <span className="font-semibold text-yellow-600">
+                            {new Date(
+                              overview.user.planResumeDate
+                            ).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                      {!overview.user.planHoldDate &&
+                        !overview.user.planResumeDate && (
+                          <div className="text-sm text-gray-500 italic">
+                            No hold/resume history
+                          </div>
+                        )}
+                    </div>
+                  </div>
+
+                  {/* Action Buttons Card */}
+                  <div className="bg-gradient-to-br from-yellow-50 to-amber-100 rounded-xl p-6 border border-yellow-200">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center">
+                        <svg
+                          className="w-5 h-5 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13 10V3L4 14h7v7l9-11h-7z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-800">
+                          Quick Actions
+                        </h4>
+                        <p className="text-sm text-gray-600">
+                          Manage plan status
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {overview.user.planHoldDate &&
+                      !overview.user.planResumeDate ? (
+                        <button
+                          onClick={handleResumePlan}
+                          disabled={planActionLoading}
+                          className="w-full bg-yellow-500 hover:bg-yellow-600 disabled:bg-yellow-300 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:transform-none flex items-center justify-center gap-2"
+                        >
+                          {planActionLoading ? (
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                          )}
+                          Resume Plan
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleHoldPlan}
+                          disabled={planActionLoading}
+                          className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:transform-none flex items-center justify-center gap-2"
+                        >
+                          {planActionLoading ? (
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                          )}
+                          Hold Plan
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* ------------------ Progress by Day ------------------ */}
             <div className="p-8 mx-7 bg-white rounded-2xl shadow-lg">
@@ -273,6 +643,26 @@ const UserProfilePage = () => {
             </div>
           </div>
         )}
+
+        {/* Confirmation Dialog */}
+        <ConfirmationDialog
+          isOpen={confirmDialog.isOpen}
+          onClose={() =>
+            setConfirmDialog({
+              isOpen: false,
+              title: "",
+              message: "",
+              type: "warning",
+              onConfirm: null,
+            })
+          }
+          onConfirm={confirmDialog.onConfirm}
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          type={confirmDialog.type}
+          confirmText="Confirm"
+          cancelText="Cancel"
+        />
       </div>
     </RoleGuard>
   );

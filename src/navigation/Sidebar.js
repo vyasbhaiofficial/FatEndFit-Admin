@@ -11,6 +11,7 @@ import {
   MdPeople,
   MdPerson,
   MdVideoLibrary,
+  MdQuiz,
 } from "react-icons/md";
 import { MdChevronLeft, MdChevronRight } from "react-icons/md";
 import { FiMessageCircle } from "react-icons/fi";
@@ -111,6 +112,13 @@ const Sidebar = () => {
               >
                 <MdAssignment size={20} />
                 {!isCollapsed && <span>Plans</span>}
+              </Link>
+              <Link
+                href="/component/question"
+                className={linkClasses("/component/question")}
+              >
+                <MdQuiz size={20} />
+                {!isCollapsed && <span>Questions</span>}
               </Link>
             </>
           )}

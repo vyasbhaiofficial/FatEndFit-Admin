@@ -1,7 +1,7 @@
 import axios from "axios";
 
-export const API_BASE = "http://localhost:3002/api/v1";
-// export const API_BASE = "https://fatendfit.codestoreapp.com/api/v1";
+// export const API_BASE = "http://localhost:3002/api/v1";
+export const API_BASE = "https://fatendfit.codestoreapp.com/api/v1";
 // Host base used to resolve file URLs coming from multer (e.g., uploads/..)
 export const API_HOST = API_BASE.replace(/\/?api\/?v1\/?$/, "").replace(
   /\/$/,
@@ -47,6 +47,7 @@ export const generateUrl = async (formData) => {
     formData,
     { headers: getAuthHeaders() }
   );
+  console.log("response---------generateUrl---------:", response.data);
 
   let fileUrl = response.data;
 
@@ -350,26 +351,124 @@ export const listVideos = async (params = {}) => {
   return res.data.data;
 };
 
+// Question Management APIs
+export const createQuestionByVideoId = async (payload) => {
+  const res = await axios.post(
+    `${API_BASE}/admin/question/create-by-video`,
+    payload,
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+  return res.data.data;
+};
+
+export const createQuestionDaily = async (payload) => {
+  const res = await axios.post(
+    `${API_BASE}/admin/question/create-daily`,
+    payload,
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+  return res.data.data;
+};
+
+export const getAllQuestions = async (params = {}) => {
+  const res = await axios.get(`${API_BASE}/admin/question/get-all`, {
+    params,
+    headers: getAuthHeaders(),
+  });
+  return res.data.data;
+};
+
+// Removed old API calls - now using getAllQuestions instead
+
+export const updateQuestion = async (questionId, payload) => {
+  const res = await axios.put(
+    `${API_BASE}/admin/question/update/${questionId}`,
+    payload,
+    {
+      headers: getAuthHeaders(),
+    }
+  );
+  return res.data.data;
+};
+
+export const deleteQuestion = async (questionId) => {
+  const res = await axios.delete(`${API_BASE}/admin/question/${questionId}`, {
+    headers: getAuthHeaders(),
+  });
+  return res.data.data;
+};
+
 export const createVideoApi = async (payload) => {
   console.log("------------------payload----------------", payload.videoSecond);
 
   const data = new FormData();
-  if (payload.title) data.append("title", payload.title);
+
+  // Multi-language titles
+  if (payload.title_english)
+    data.append("title_english", payload.title_english);
+  if (payload.title_gujarati)
+    data.append("title_gujarati", payload.title_gujarati);
+  if (payload.title_hindi) data.append("title_hindi", payload.title_hindi);
+
+  // Video type and files/URLs
   if (typeof payload.videoType !== "undefined")
     data.append("videoType", String(payload.videoType));
-  if (payload.videoType === 1 && payload.videoFile)
-    data.append("video", payload.videoFile);
-  if (payload.videoType === 2 && payload.videoUrl)
-    data.append("video", payload.videoUrl);
+
+  if (payload.videoType === 1) {
+    // File uploads for each language
+    if (payload.video_english)
+      data.append("video_english", payload.video_english);
+    if (payload.video_gujarati)
+      data.append("video_gujarati", payload.video_gujarati);
+    if (payload.video_hindi) data.append("video_hindi", payload.video_hindi);
+  } else if (payload.videoType === 2) {
+    // URLs for each language
+    if (payload.video_english_url)
+      data.append("video_english_url", payload.video_english_url);
+    if (payload.video_gujarati_url)
+      data.append("video_gujarati_url", payload.video_gujarati_url);
+    if (payload.video_hindi_url)
+      data.append("video_hindi_url", payload.video_hindi_url);
+  }
+
   if (typeof payload.videoSecond !== "undefined")
     data.append("videoSecond", String(payload.videoSecond));
+
+  // Thumbnail type and files/URLs
   if (typeof payload.thumbnailType !== "undefined")
     data.append("thumbnailType", String(payload.thumbnailType));
-  if (payload.thumbnailType === 1 && payload.thumbnailFile)
-    data.append("thumbnail", payload.thumbnailFile);
-  if (payload.thumbnailType === 2 && payload.thumbnailUrl)
-    data.append("thumbnail", payload.thumbnailUrl);
-  if (payload.description) data.append("description", payload.description);
+
+  if (payload.thumbnailType === 1) {
+    // File uploads for each language
+    if (payload.thumbnail_english)
+      data.append("thumbnail_english", payload.thumbnail_english);
+    if (payload.thumbnail_gujarati)
+      data.append("thumbnail_gujarati", payload.thumbnail_gujarati);
+    if (payload.thumbnail_hindi)
+      data.append("thumbnail_hindi", payload.thumbnail_hindi);
+  } else if (payload.thumbnailType === 2) {
+    // URLs for each language
+    if (payload.thumbnail_english_url)
+      data.append("thumbnail_english_url", payload.thumbnail_english_url);
+    if (payload.thumbnail_gujarati_url)
+      data.append("thumbnail_gujarati_url", payload.thumbnail_gujarati_url);
+    if (payload.thumbnail_hindi_url)
+      data.append("thumbnail_hindi_url", payload.thumbnail_hindi_url);
+  }
+
+  // Multi-language descriptions
+  if (payload.description_english)
+    data.append("description_english", payload.description_english);
+  if (payload.description_gujarati)
+    data.append("description_gujarati", payload.description_gujarati);
+  if (payload.description_hindi)
+    data.append("description_hindi", payload.description_hindi);
+
+  // Other fields
   if (typeof payload.type !== "undefined")
     data.append("type", String(payload.type));
   if (payload.type === 1 && typeof payload.day !== "undefined")
@@ -390,23 +489,70 @@ export const createVideoApi = async (payload) => {
 
 export const updateVideoById = async (id, payload) => {
   const data = new FormData();
-  if (typeof payload.title !== "undefined") data.append("title", payload.title);
+
+  // Multi-language titles
+  if (typeof payload.title_english !== "undefined")
+    data.append("title_english", payload.title_english);
+  if (typeof payload.title_gujarati !== "undefined")
+    data.append("title_gujarati", payload.title_gujarati);
+  if (typeof payload.title_hindi !== "undefined")
+    data.append("title_hindi", payload.title_hindi);
+
+  // Video type and files/URLs
   if (typeof payload.videoType !== "undefined")
     data.append("videoType", String(payload.videoType));
-  if (payload.videoType === 1 && payload.videoFile)
-    data.append("video", payload.videoFile);
-  if (payload.videoType === 2 && payload.videoUrl)
-    data.append("video", payload.videoUrl);
+
+  if (payload.videoType === 1) {
+    // File uploads for each language
+    if (payload.video_english)
+      data.append("video_english", payload.video_english);
+    if (payload.video_gujarati)
+      data.append("video_gujarati", payload.video_gujarati);
+    if (payload.video_hindi) data.append("video_hindi", payload.video_hindi);
+  } else if (payload.videoType === 2) {
+    // URLs for each language
+    if (payload.video_english_url)
+      data.append("video_english_url", payload.video_english_url);
+    if (payload.video_gujarati_url)
+      data.append("video_gujarati_url", payload.video_gujarati_url);
+    if (payload.video_hindi_url)
+      data.append("video_hindi_url", payload.video_hindi_url);
+  }
+
   if (typeof payload.videoSecond !== "undefined")
     data.append("videoSecond", String(payload.videoSecond));
+
+  // Thumbnail type and files/URLs
   if (typeof payload.thumbnailType !== "undefined")
     data.append("thumbnailType", String(payload.thumbnailType));
-  if (payload.thumbnailType === 1 && payload.thumbnailFile)
-    data.append("thumbnail", payload.thumbnailFile);
-  if (payload.thumbnailType === 2 && payload.thumbnailUrl)
-    data.append("thumbnail", payload.thumbnailUrl);
-  if (typeof payload.description !== "undefined")
-    data.append("description", payload.description);
+
+  if (payload.thumbnailType === 1) {
+    // File uploads for each language
+    if (payload.thumbnail_english)
+      data.append("thumbnail_english", payload.thumbnail_english);
+    if (payload.thumbnail_gujarati)
+      data.append("thumbnail_gujarati", payload.thumbnail_gujarati);
+    if (payload.thumbnail_hindi)
+      data.append("thumbnail_hindi", payload.thumbnail_hindi);
+  } else if (payload.thumbnailType === 2) {
+    // URLs for each language
+    if (payload.thumbnail_english_url)
+      data.append("thumbnail_english_url", payload.thumbnail_english_url);
+    if (payload.thumbnail_gujarati_url)
+      data.append("thumbnail_gujarati_url", payload.thumbnail_gujarati_url);
+    if (payload.thumbnail_hindi_url)
+      data.append("thumbnail_hindi_url", payload.thumbnail_hindi_url);
+  }
+
+  // Multi-language descriptions
+  if (typeof payload.description_english !== "undefined")
+    data.append("description_english", payload.description_english);
+  if (typeof payload.description_gujarati !== "undefined")
+    data.append("description_gujarati", payload.description_gujarati);
+  if (typeof payload.description_hindi !== "undefined")
+    data.append("description_hindi", payload.description_hindi);
+
+  // Other fields
   if (typeof payload.type !== "undefined")
     data.append("type", String(payload.type));
   if (payload.type === 1 && typeof payload.day !== "undefined")
@@ -460,6 +606,32 @@ export const updateCategoryById = async (id, payload) => {
 
 export const deleteCategoryById = async (id) => {
   const res = await axios.delete(`${API_BASE}/admin/category/${id}`, {
+    headers: getAuthHeaders(),
+  });
+  return res.data;
+};
+
+/* -------------------- USER PLAN MANAGEMENT APIs -------------------- */
+export const holdUserPlan = async (userId) => {
+  const res = await axios.post(
+    `${API_BASE}/admin/user/${userId}/plan/hold`,
+    {},
+    { headers: getAuthHeaders() }
+  );
+  return res.data;
+};
+
+export const resumeUserPlan = async (userId) => {
+  const res = await axios.post(
+    `${API_BASE}/admin/user/${userId}/plan/resume`,
+    {},
+    { headers: getAuthHeaders() }
+  );
+  return res.data;
+};
+
+export const getUserPlanStatus = async (userId) => {
+  const res = await axios.get(`${API_BASE}/admin/user/${userId}/plan/status`, {
     headers: getAuthHeaders(),
   });
   return res.data;

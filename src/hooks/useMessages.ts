@@ -5,20 +5,56 @@ import { db } from "../lib/firebase";
 
 export function useMessages(chatId?: string) {
   const [messages, setMessages] = useState<any[]>([]);
-  console.log(messages);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!chatId) return;
+    if (!chatId || !db) {
+      setMessages([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
     const q = query(
       collection(db, "chats", chatId, "messages"),
       orderBy("createdAt", "asc")
     );
-    console.log(q);
-    const unsub = onSnapshot(q, (snap) =>
-      setMessages(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
-    );
-    return () => unsub();
-  }, [chatId]);
 
-  return messages;
+    const unsub = onSnapshot(
+      q, 
+      (snap) => {
+        const newMessages = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        setMessages(newMessages);
+        setLoading(false);
+        setError(null);
+        console.log(`Messages updated for chat ${chatId}:`, newMessages.length);
+      },
+      (err) => {
+        console.error("Firebase error in useMessages:", err);
+        setError(err.message);
+        setLoading(false);
+        // Set empty messages on error
+        setMessages([]);
+        
+        // If it's a connection error, try to reconnect after a delay
+        if (err.code === 'unavailable' || err.message.includes('ERR_CONNECTION_REFUSED')) {
+          console.log("Connection error detected, will retry...");
+          setTimeout(() => {
+            // This will trigger a re-render and retry
+            setLoading(true);
+          }, 3000); // Reduced retry time
+        }
+      }
+    );
+
+    return () => {
+      console.log(`Cleaning up messages listener for chat ${chatId}`);
+      unsub();
+    };
+  }, [chatId, db]);
+
+  return { messages, error, loading };
 }

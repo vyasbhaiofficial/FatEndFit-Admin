@@ -112,7 +112,7 @@ const UserForm = ({
           placeholder="Enter name"
         />
         {errors.name && (
-          <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+          <p className="text-amber-600 text-sm mt-1">{errors.name}</p>
         )}
       </div>
 
@@ -131,7 +131,7 @@ const UserForm = ({
             className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
           />
           {errors.mobilePrefix && (
-            <p className="text-red-500 text-sm mt-1">{errors.mobilePrefix}</p>
+            <p className="text-amber-600 text-sm mt-1">{errors.mobilePrefix}</p>
           )}
         </div>
         <div className="col-span-2">
@@ -148,7 +148,7 @@ const UserForm = ({
             placeholder="10-digit number"
           />
           {errors.mobileNumber && (
-            <p className="text-red-500 text-sm mt-1">{errors.mobileNumber}</p>
+            <p className="text-amber-600 text-sm mt-1">{errors.mobileNumber}</p>
           )}
         </div>
       </div>
@@ -163,7 +163,7 @@ const UserForm = ({
           disabled={role === "subadmin"}
         />
         {errors.branchId && (
-          <p className="text-red-500 text-sm mt-1">{errors.branchId}</p>
+          <p className="text-amber-600 text-sm mt-1">{errors.branchId}</p>
         )}
       </div>
 
@@ -176,7 +176,7 @@ const UserForm = ({
           onChange={(val) => setForm((f) => ({ ...f, planId: val }))}
         />
         {errors.planId && (
-          <p className="text-red-500 text-sm mt-1">{errors.planId}</p>
+          <p className="text-amber-600 text-sm mt-1">{errors.planId}</p>
         )}
       </div>
 
