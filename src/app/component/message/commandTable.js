@@ -1,7 +1,6 @@
 "use client";
 
 import { ActionButton } from "@/utils/actionbutton";
-import { FiEdit, FiTrash2 } from "react-icons/fi";
 import { API_BASE, API_HOST } from "@/Api/AllApi";
 
 const resolveAudioUrl = (input) => {
