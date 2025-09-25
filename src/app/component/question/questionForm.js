@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import TimeButton from "@/utils/timebutton";
 import Dropdown from "@/utils/dropdown";
+import MultiLanguageInput from "@/components/MultiLanguageInput";
 // API calls are handled by the parent component
 
 const QuestionForm = ({
@@ -112,6 +113,7 @@ const QuestionForm = ({
 
   const handleInputChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
@@ -197,162 +199,49 @@ const QuestionForm = ({
         )}
 
         {/* Question Text - Multi-Language */}
-        <div className="bg-gradient-to-r from-yellow-50 to-amber-50 p-4 rounded-xl border border-yellow-200">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <svg
-              className="w-5 h-5 text-yellow-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            Question Text (Multi-Language)
-          </h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                English Question
-              </label>
-              <textarea
-                value={form.questionText_english}
-                onChange={(e) =>
-                  handleInputChange("questionText_english", e.target.value)
-                }
-                className="w-full border border-yellow-400 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
-                rows={3}
-                placeholder="Enter question in English"
-              />
-              {errors.questionText_english && (
-                <p className="text-amber-600 text-sm mt-1">
-                  {errors.questionText_english}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Gujarati Question
-              </label>
-              <textarea
-                value={form.questionText_gujarati}
-                onChange={(e) =>
-                  handleInputChange("questionText_gujarati", e.target.value)
-                }
-                className="w-full border border-yellow-400 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
-                rows={3}
-                placeholder="Enter question in Gujarati"
-              />
-              {errors.questionText_gujarati && (
-                <p className="text-amber-600 text-sm mt-1">
-                  {errors.questionText_gujarati}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Hindi Question
-              </label>
-              <textarea
-                value={form.questionText_hindi}
-                onChange={(e) =>
-                  handleInputChange("questionText_hindi", e.target.value)
-                }
-                className="w-full border border-yellow-400 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
-                rows={3}
-                placeholder="Enter question in Hindi"
-              />
-              {errors.questionText_hindi && (
-                <p className="text-amber-600 text-sm mt-1">
-                  {errors.questionText_hindi}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
+        <MultiLanguageInput
+          label="Question Text"
+          icon="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          values={{
+            questionText_english: form.questionText_english,
+            questionText_gujarati: form.questionText_gujarati,
+            questionText_hindi: form.questionText_hindi,
+          }}
+          onChange={(values) => {
+            setForm((f) => ({
+              ...f,
+              questionText_english: values.questionText_english,
+              questionText_gujarati: values.questionText_gujarati,
+              questionText_hindi: values.questionText_hindi,
+            }));
+          }}
+          errors={errors}
+          type="textarea"
+          rows={3}
+        />
 
         {/* Correct Answer - Multi-Language */}
-        <div className="bg-gradient-to-r from-amber-50 to-yellow-50 p-4 rounded-xl border border-amber-200">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <svg
-              className="w-5 h-5 text-amber-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            Correct Answer (Multi-Language)
-          </h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                English Answer
-              </label>
-              <textarea
-                value={form.correctAnswer_english}
-                onChange={(e) =>
-                  handleInputChange("correctAnswer_english", e.target.value)
-                }
-                className="w-full border border-amber-400 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-amber-400 transition"
-                rows={3}
-                placeholder="Enter correct answer in English"
-              />
-              {errors.correctAnswer_english && (
-                <p className="text-amber-600 text-sm mt-1">
-                  {errors.correctAnswer_english}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Gujarati Answer
-              </label>
-              <textarea
-                value={form.correctAnswer_gujarati}
-                onChange={(e) =>
-                  handleInputChange("correctAnswer_gujarati", e.target.value)
-                }
-                className="w-full border border-amber-400 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-amber-400 transition"
-                rows={3}
-                placeholder="Enter correct answer in Gujarati"
-              />
-              {errors.correctAnswer_gujarati && (
-                <p className="text-amber-600 text-sm mt-1">
-                  {errors.correctAnswer_gujarati}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Hindi Answer
-              </label>
-              <textarea
-                value={form.correctAnswer_hindi}
-                onChange={(e) =>
-                  handleInputChange("correctAnswer_hindi", e.target.value)
-                }
-                className="w-full border border-amber-400 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-amber-400 transition"
-                rows={3}
-                placeholder="Enter correct answer in Hindi"
-              />
-              {errors.correctAnswer_hindi && (
-                <p className="text-amber-600 text-sm mt-1">
-                  {errors.correctAnswer_hindi}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
+        <MultiLanguageInput
+          label="Correct Answer"
+          icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+          values={{
+            correctAnswer_english: form.correctAnswer_english,
+            correctAnswer_gujarati: form.correctAnswer_gujarati,
+            correctAnswer_hindi: form.correctAnswer_hindi,
+          }}
+          onChange={(values) => {
+            setForm((f) => ({
+              ...f,
+              correctAnswer_english: values.correctAnswer_english,
+              correctAnswer_gujarati: values.correctAnswer_gujarati,
+              correctAnswer_hindi: values.correctAnswer_hindi,
+            }));
+          }}
+          errors={errors}
+          type="textarea"
+          rows={3}
+          sectionClassName="from-amber-50 to-yellow-50 border-amber-200"
+        />
 
         {/* Form Actions */}
         <div className="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">

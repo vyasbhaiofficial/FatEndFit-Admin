@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { ActionButton } from "@/utils/actionbutton";
+import ConfirmationDialog from "@/components/ConfirmationDialog";
 import { API_BASE, API_HOST } from "@/Api/AllApi";
 
 const resolveAudioUrl = (input) => {
@@ -41,6 +43,38 @@ const resolveAudioUrl = (input) => {
 import NotFoundCard from "@/components/NotFoundCard";
 
 const CommandTable = ({ commands, onEdit, onDelete }) => {
+  const [deleteDialog, setDeleteDialog] = useState({
+    isOpen: false,
+    itemId: null,
+    itemName: null,
+  });
+
+  const handleDeleteClick = (itemId, itemName) => {
+    setDeleteDialog({
+      isOpen: true,
+      itemId,
+      itemName,
+    });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (deleteDialog.itemId) {
+      onDelete(deleteDialog.itemId);
+    }
+    setDeleteDialog({
+      isOpen: false,
+      itemId: null,
+      itemName: null,
+    });
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialog({
+      isOpen: false,
+      itemId: null,
+      itemName: null,
+    });
+  };
   if (!commands || commands.length === 0) {
     return (
       <div className="overflow-x-auto shadow-md rounded-2xl border border-gray-200 bg-white">
@@ -53,6 +87,7 @@ const CommandTable = ({ commands, onEdit, onDelete }) => {
   }
 
   return (
+    <>
     <div className="overflow-x-auto shadow-md rounded-2xl border border-gray-200 bg-white">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gradient-to-r from-yellow-400 to-amber-300">
@@ -108,13 +143,26 @@ const CommandTable = ({ commands, onEdit, onDelete }) => {
               </td>
               <td className="px-6 py-4 text-center space-x-2">
                 <ActionButton type="edit" onClick={() => onEdit(cmd)} />
-                <ActionButton type="delete" onClick={() => onDelete(cmd._id)} />
+                <ActionButton type="delete" onClick={() => handleDeleteClick(cmd._id, cmd.command_english || cmd.command || 'Command')} />
               </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
+    
+    {/* Delete Confirmation Dialog */}
+    <ConfirmationDialog
+      isOpen={deleteDialog.isOpen}
+      onClose={handleDeleteCancel}
+      onConfirm={handleDeleteConfirm}
+      title="Delete Command"
+      message={`Are you sure you want to delete "${deleteDialog.itemName}"? This action cannot be undone.`}
+      confirmText="Delete"
+      cancelText="Cancel"
+        type="danger"
+      />
+    </>
   );
 };
 

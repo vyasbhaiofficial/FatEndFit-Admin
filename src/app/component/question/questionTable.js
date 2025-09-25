@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import Loader from "@/utils/loader";
 import NotFoundCard from "@/components/NotFoundCard";
 import { ActionButton } from "@/utils/actionbutton";
+import ConfirmationDialog from "@/components/ConfirmationDialog";
 
 const QuestionTable = ({
   items,
@@ -14,12 +15,44 @@ const QuestionTable = ({
   selectedLanguage = "english", // Default to english if not provided
 }) => {
   const [expandedCards, setExpandedCards] = useState({});
+  const [deleteDialog, setDeleteDialog] = useState({
+    isOpen: false,
+    itemId: null,
+    itemName: null,
+  });
 
   const toggleCard = (cardId) => {
     setExpandedCards((prev) => ({
       ...prev,
       [cardId]: !prev[cardId],
     }));
+  };
+
+  const handleDeleteClick = (itemId, itemName) => {
+    setDeleteDialog({
+      isOpen: true,
+      itemId,
+      itemName,
+    });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (deleteDialog.itemId) {
+      onDelete(deleteDialog.itemId);
+    }
+    setDeleteDialog({
+      isOpen: false,
+      itemId: null,
+      itemName: null,
+    });
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialog({
+      isOpen: false,
+      itemId: null,
+      itemName: null,
+    });
   };
   if (loading) {
     return (
@@ -124,7 +157,14 @@ const QuestionTable = ({
                 <ActionButton type="edit" onClick={() => onEdit(question)} />
                 <ActionButton
                   type="delete"
-                  onClick={() => onDelete(question._id)}
+                  onClick={() =>
+                    handleDeleteClick(
+                      question._id,
+                      question.question_english ||
+                        question.question ||
+                        "Question"
+                    )
+                  }
                 />
                 <button
                   onClick={() => toggleCard(question._id)}
@@ -336,6 +376,18 @@ const QuestionTable = ({
           </div>
         </div>
       ))}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={deleteDialog.isOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Question"
+        message={`Are you sure you want to delete "${deleteDialog.itemName}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 };

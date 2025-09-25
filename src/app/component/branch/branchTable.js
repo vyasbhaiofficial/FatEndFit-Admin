@@ -1,10 +1,43 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import Loader from "@/utils/loader";
 import NotFoundCard from "@/components/NotFoundCard";
 import { ActionButton } from "@/utils/actionbutton";
+import ConfirmationDialog from "@/components/ConfirmationDialog";
 
 const BranchTable = ({ items, loading, onEdit, onDelete }) => {
+  const [deleteDialog, setDeleteDialog] = useState({
+    isOpen: false,
+    itemId: null,
+    itemName: null,
+  });
+
+  const handleDeleteClick = (itemId, itemName) => {
+    setDeleteDialog({
+      isOpen: true,
+      itemId,
+      itemName,
+    });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (deleteDialog.itemId) {
+      onDelete(deleteDialog.itemId);
+    }
+    setDeleteDialog({
+      isOpen: false,
+      itemId: null,
+      itemName: null,
+    });
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialog({
+      isOpen: false,
+      itemId: null,
+      itemName: null,
+    });
+  };
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
@@ -25,7 +58,8 @@ const BranchTable = ({ items, loading, onEdit, onDelete }) => {
   }
 
   return (
-    <div className="overflow-x-auto shadow-md rounded-2xl border border-gray-200 bg-white">
+    <>
+      <div className="overflow-x-auto shadow-md rounded-2xl border border-gray-200 bg-white">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gradient-to-r from-yellow-400 to-amber-300">
           <tr>
@@ -84,14 +118,28 @@ const BranchTable = ({ items, loading, onEdit, onDelete }) => {
               </td>
               <td className="px-6 py-4 text-center space-x-2">
                 <ActionButton type="edit" onClick={() => onEdit(b)} />
-                <ActionButton type="delete" onClick={() => onDelete(b._id)} />
+                <ActionButton type="delete" onClick={() => handleDeleteClick(b._id, b.name || 'Branch')} />
               </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
+    
+    {/* Delete Confirmation Dialog */}
+    <ConfirmationDialog
+      isOpen={deleteDialog.isOpen}
+      onClose={handleDeleteCancel}
+      onConfirm={handleDeleteConfirm}
+      title="Delete Branch"
+      message={`Are you sure you want to delete "${deleteDialog.itemName}"? This action cannot be undone.`}
+      confirmText="Delete"
+      cancelText="Cancel"
+      type="danger"
+    />
+    </>
   );
 };
+
 
 export default BranchTable;
