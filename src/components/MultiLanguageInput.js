@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const MultiLanguageInput = ({
   label,
@@ -20,6 +20,30 @@ const MultiLanguageInput = ({
 }) => {
   const [copyToAllLanguages, setCopyToAllLanguages] =
     useState(defaultCopyChecked);
+
+  // Clear auto-filled values when checkbox is unchecked
+  useEffect(() => {
+    if (!copyToAllLanguages) {
+      const newValues = { ...values };
+      fields.forEach((field) => {
+        if (field !== "english") {
+          const key = resolveKeyFor(field);
+          if (key && newValues[key]) {
+            delete newValues[key];
+          }
+        }
+      });
+      // Only call onChange if values actually changed
+      const hasChanges = fields.some((field) => {
+        if (field === "english") return false;
+        const key = resolveKeyFor(field);
+        return key && values[key];
+      });
+      if (hasChanges) {
+        onChange(newValues);
+      }
+    }
+  }, [copyToAllLanguages]);
 
   // Auto-resolve actual key from provided values by language suffix
   const resolveKeyFor = (language) => {
@@ -70,6 +94,28 @@ const MultiLanguageInput = ({
     onChange(newValues);
   };
 
+  // Handle checkbox change - copy English content to other languages when checked
+  const handleCheckboxChange = (checked) => {
+    setCopyToAllLanguages(checked);
+
+    if (checked) {
+      // When checking the box, copy English content to other languages
+      const englishKey = resolveKeyFor("english");
+      const englishValue = values[englishKey];
+
+      if (englishValue) {
+        const newValues = { ...values };
+        fields.forEach((field) => {
+          if (field !== "english") {
+            const key = resolveKeyFor(field);
+            newValues[key] = englishValue;
+          }
+        });
+        onChange(newValues);
+      }
+    }
+  };
+
   // Handle file input changes
   const handleFileChange = (field, file) => {
     const key = resolveKeyFor(field);
@@ -82,7 +128,35 @@ const MultiLanguageInput = ({
       newValues[hKey] = file;
     }
 
+    console.log("handleFileChange:", {
+      field,
+      file,
+      newValues,
+      copyToAllLanguages,
+    });
     onChange(newValues);
+  };
+
+  // Handle file checkbox change - copy English file to other languages when checked
+  const handleFileCheckboxChange = (checked) => {
+    setCopyToAllLanguages(checked);
+
+    if (checked) {
+      // When checking the box, copy English file to other languages
+      const englishKey = resolveKeyFor("english");
+      const englishFile = values[englishKey];
+
+      if (englishFile) {
+        const newValues = { ...values };
+        fields.forEach((field) => {
+          if (field !== "english") {
+            const key = resolveKeyFor(field);
+            newValues[key] = englishFile;
+          }
+        });
+        onChange(newValues);
+      }
+    }
   };
 
   const getFieldLabel = (field) => {
@@ -115,7 +189,13 @@ const MultiLanguageInput = ({
     const key = resolveKeyFor(field);
     const value = values[key];
     console.log("getFieldValue:", { field, key, value, values });
-    // Ensure we always return a string to prevent controlled/uncontrolled warning
+
+    // For file inputs, return the file object directly
+    if (type === "file") {
+      return value || null;
+    }
+
+    // For other inputs, ensure we always return a string to prevent controlled/uncontrolled warning
     if (value === null || value === undefined) {
       return "";
     }
@@ -173,7 +253,13 @@ const MultiLanguageInput = ({
               <input
                 type="checkbox"
                 checked={copyToAllLanguages}
-                onChange={(e) => setCopyToAllLanguages(e.target.checked)}
+                onChange={(e) => {
+                  if (type === "file") {
+                    handleFileCheckboxChange(e.target.checked);
+                  } else {
+                    handleCheckboxChange(e.target.checked);
+                  }
+                }}
                 className="sr-only"
               />
               <div
@@ -224,15 +310,34 @@ const MultiLanguageInput = ({
                 disabled={isFieldDisabled(field)}
               />
             ) : type === "file" ? (
-              <input
-                type="file"
-                accept={accept}
-                onChange={(e) =>
-                  handleFileChange(field, e.target.files?.[0] || null)
-                }
-                className={`${getFieldClassName(field)} bg-white`}
-                disabled={isFieldDisabled(field)}
-              />
+              <div className="relative">
+                <input
+                  key={`${field}-${
+                    copyToAllLanguages ? "auto-filled" : "manual"
+                  }`}
+                  type="file"
+                  accept={accept}
+                  onChange={(e) =>
+                    handleFileChange(field, e.target.files?.[0] || null)
+                  }
+                  className={`${getFieldClassName(field)} bg-white`}
+                  disabled={isFieldDisabled(field)}
+                />
+                {getFieldValue(field) && (
+                  <div
+                    className={`mt-2 text-sm p-2 rounded border ${
+                      copyToAllLanguages && field !== "english"
+                        ? "text-yellow-700 bg-yellow-50 border-yellow-200"
+                        : "text-gray-600 bg-gray-50 border-gray-200"
+                    }`}
+                  >
+                    {copyToAllLanguages && field !== "english"
+                      ? "Auto-filled: "
+                      : "Selected: "}
+                    {getFieldValue(field).name || getFieldValue(field)}
+                  </div>
+                )}
+              </div>
             ) : (
               <input
                 type={type}
