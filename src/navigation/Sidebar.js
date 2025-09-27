@@ -17,6 +17,7 @@ import { MdChevronLeft, MdChevronRight } from "react-icons/md";
 import { FiMessageCircle } from "react-icons/fi";
 
 import { useAuth } from "../contexts/AuthContext";
+import Image from "next/image";
 
 const Sidebar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -26,32 +27,45 @@ const Sidebar = () => {
   const linkClasses = (path) =>
     `flex items-center ${
       isCollapsed ? "justify-center" : "gap-3 px-3"
-    } py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
+    } py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
       pathname === path
-        ? "bg-yellow-400 text-black shadow-sm"
-        : "text-gray-700 hover:bg-yellow-100 hover:text-black"
+        ? "bg-gradient-to-r from-yellow-400 to-amber-500 text-black shadow-lg transform scale-105"
+        : "text-gray-700 hover:bg-gradient-to-r hover:from-yellow-50 hover:to-amber-50 hover:text-black hover:shadow-md hover:transform hover:scale-105"
     }`;
 
   return (
     <aside
       className={`${
         isCollapsed ? "w-16" : "w-64"
-      } bg-white shadow-md border-r border-gray-200 flex flex-col h-screen transition-all duration-300`}
+      } bg-white shadow-2xl border-r border-gray-200 flex flex-col h-screen transition-all duration-300 backdrop-blur-sm`}
     >
       {/* Logo + Toggle */}
-      <div className="p-5 border-b border-gray-200 flex items-center justify-between">
+      <div className="p-5 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-gray-50 to-yellow-50">
         {!isCollapsed ? (
-          <h1 className="text-xl font-extrabold text-gray-900 tracking-wide">
-            <span className="text-yellow-400">Fat</span>
-            <span className="text-black">Endfit</span>
-          </h1>
+          <div className="flex items-center gap-3">
+            <div className="relative group">
+              <div className=""></div>
+              <div className="relative">
+                <Image
+                  src="/image/logo.png"
+                  alt="fatEndfit Logo"
+                  width={150}
+                  height={50}
+                  className="object-contain"
+                  priority
+                />
+              </div>
+            </div>
+          </div>
         ) : (
-          <div className="w-8 h-8 bg-yellow-400 rounded-md" />
+          <div></div>
         )}
         <button
           aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           onClick={() => setIsCollapsed((v) => !v)}
-          className="ml-2 p-1 rounded-md hover:bg-yellow-100 text-gray-700"
+          className={`p-2 rounded-lg hover:bg-yellow-100 text-gray-700 transition-all duration-200 hover:shadow-md hover:scale-105 ${
+            isCollapsed ? "mx-auto" : "ml-2"
+          }`}
         >
           {isCollapsed ? (
             <MdChevronRight size={20} />

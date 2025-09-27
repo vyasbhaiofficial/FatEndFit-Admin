@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 const MultiLanguageInput = ({
   label,
@@ -21,62 +21,65 @@ const MultiLanguageInput = ({
   const [copyToAllLanguages, setCopyToAllLanguages] =
     useState(defaultCopyChecked);
 
+  // Auto-resolve actual key from provided values by language suffix
+  const resolveKeyFor = useCallback(
+    (language) => {
+      console.log("resolveKeyFor called:", {
+        language,
+        availableKeys: Object.keys(values),
+        values,
+      });
+
+      // First try to find exact match
+      if (Object.prototype.hasOwnProperty.call(values, language)) {
+        console.log("Found exact match:", language);
+        return language;
+      }
+
+      // Then try to find key ending with _language
+      const suffixKey = Object.keys(values).find((k) =>
+        k.endsWith(`_${language}`)
+      );
+
+      console.log("Found suffix key:", suffixKey);
+      if (suffixKey) return suffixKey;
+
+      // If no suffix key found, try to find key containing the language
+      const containsKey = Object.keys(values).find(
+        (k) => k.includes(`_${language}_`) || k.includes(`_${language}`)
+      );
+
+      console.log("Found contains key:", containsKey);
+      if (containsKey) return containsKey;
+
+      console.log("No key found, returning language:", language);
+      return language;
+    },
+    [values]
+  );
+
   // Clear auto-filled values when checkbox is unchecked
   useEffect(() => {
     if (!copyToAllLanguages) {
+      // Clear auto-filled values by setting them to null/empty
       const newValues = { ...values };
+      let hasChanges = false;
+
       fields.forEach((field) => {
         if (field !== "english") {
           const key = resolveKeyFor(field);
           if (key && newValues[key]) {
-            delete newValues[key];
+            newValues[key] = type === "file" ? null : "";
+            hasChanges = true;
           }
         }
       });
-      // Only call onChange if values actually changed
-      const hasChanges = fields.some((field) => {
-        if (field === "english") return false;
-        const key = resolveKeyFor(field);
-        return key && values[key];
-      });
+
       if (hasChanges) {
         onChange(newValues);
       }
     }
   }, [copyToAllLanguages]);
-
-  // Auto-resolve actual key from provided values by language suffix
-  const resolveKeyFor = (language) => {
-    console.log("resolveKeyFor called:", {
-      language,
-      availableKeys: Object.keys(values),
-    });
-
-    // First try to find exact match
-    if (Object.prototype.hasOwnProperty.call(values, language)) {
-      console.log("Found exact match:", language);
-      return language;
-    }
-
-    // Then try to find key ending with _language
-    const suffixKey = Object.keys(values).find((k) =>
-      k.endsWith(`_${language}`)
-    );
-
-    console.log("Found suffix key:", suffixKey);
-    if (suffixKey) return suffixKey;
-
-    // If no suffix key found, try to find key containing the language
-    const containsKey = Object.keys(values).find(
-      (k) => k.includes(`_${language}_`) || k.includes(`_${language}`)
-    );
-
-    console.log("Found contains key:", containsKey);
-    if (containsKey) return containsKey;
-
-    console.log("No key found, returning language:", language);
-    return language;
-  };
 
   const handleInputChange = (field, value) => {
     const key = resolveKeyFor(field);
@@ -188,7 +191,7 @@ const MultiLanguageInput = ({
   const getFieldValue = (field) => {
     const key = resolveKeyFor(field);
     const value = values[key];
-    console.log("getFieldValue:", { field, key, value, values });
+    console.log("getFieldValue:", { field, key, value, values, type });
 
     // For file inputs, return the file object directly
     if (type === "file") {
@@ -199,6 +202,13 @@ const MultiLanguageInput = ({
     if (value === null || value === undefined) {
       return "";
     }
+
+    // If value is an object (not a file), convert to string
+    if (typeof value === "object" && value !== null) {
+      console.warn("Unexpected object value in non-file input:", value);
+      return "";
+    }
+
     return String(value);
   };
 
@@ -334,14 +344,34 @@ const MultiLanguageInput = ({
                     {copyToAllLanguages && field !== "english"
                       ? "Auto-filled: "
                       : "Selected: "}
-                    {getFieldValue(field).name || getFieldValue(field)}
+                    {(() => {
+                      const fieldValue = getFieldValue(field);
+                      if (
+                        typeof fieldValue === "object" &&
+                        fieldValue !== null &&
+                        fieldValue.name
+                      ) {
+                        return fieldValue.name;
+                      }
+                      return String(fieldValue || "");
+                    })()}
                   </div>
                 )}
               </div>
             ) : (
               <input
                 type={type}
-                value={getFieldValue(field)}
+                value={(() => {
+                  const fieldValue = getFieldValue(field);
+                  if (typeof fieldValue === "object" && fieldValue !== null) {
+                    console.warn(
+                      "Attempting to render object as input value:",
+                      fieldValue
+                    );
+                    return "";
+                  }
+                  return fieldValue;
+                })()}
                 onChange={(e) => {
                   console.log("Input onChange triggered:", {
                     field,

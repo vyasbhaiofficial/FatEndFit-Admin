@@ -10,9 +10,20 @@ import { API_BASE } from "@/Api/AllApi";
 export const toAbsolute = (path = "") => {
   try {
     if (!path) return "";
+
+    // If it's already a full URL, return as is
+    if (path.startsWith("http://") || path.startsWith("https://")) {
+      return path;
+    }
+
     const base = API_BASE;
-    return `${base}/${path.replace(/^\/?/, "")}`;
-  } catch {
+    const cleanPath = path.replace(/^\/?/, "");
+    const fullUrl = `${base}/${cleanPath}`;
+
+    console.log("toAbsolute conversion:", { path, cleanPath, fullUrl });
+    return fullUrl;
+  } catch (error) {
+    console.error("toAbsolute error:", error);
     return path;
   }
 };
@@ -220,9 +231,9 @@ const VideoTable = ({ items, loading, onEdit, onDelete }) => {
                           className="w-full h-40 object-cover rounded-xl border border-yellow-200"
                         />
                       ) : (
-                        <div className="w-full h-20 bg-gray-200 rounded flex items-center justify-center border border-yellow-200">
+                        <div className="w-full h-40 bg-gray-200 rounded-xl flex items-center justify-center border border-yellow-200">
                           <span className="text-gray-400 text-xs">
-                            No Image
+                            No Thumbnail
                           </span>
                         </div>
                       )}
