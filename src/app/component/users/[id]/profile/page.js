@@ -522,7 +522,7 @@ const UserProfilePage = () => {
                     >
                       {d.firstThumbnail ? (
                         <img
-                          src={`${API_BASE}/${d.firstThumbnail}`}
+                          src={`${API_BASE}/${d.firstThumbnail.english}`}
                           alt={`Day ${d.day}`}
                           className="w-full h-50 bg-amber-100 object-cover"
                         />
