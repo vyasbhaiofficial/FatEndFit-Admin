@@ -80,15 +80,18 @@ const QuestionForm = ({
       newErrors.questionText_hindi = "Hindi question text is required";
     }
 
-    // Validate correct answer in all languages
-    if (!form.correctAnswer_english.trim()) {
-      newErrors.correctAnswer_english = "English correct answer is required";
-    }
-    if (!form.correctAnswer_gujarati.trim()) {
-      newErrors.correctAnswer_gujarati = "Gujarati correct answer is required";
-    }
-    if (!form.correctAnswer_hindi.trim()) {
-      newErrors.correctAnswer_hindi = "Hindi correct answer is required";
+    // Validate correct answer only for video questions, not for daily questions
+    if (questionType === "video") {
+      if (!form.correctAnswer_english.trim()) {
+        newErrors.correctAnswer_english = "English correct answer is required";
+      }
+      if (!form.correctAnswer_gujarati.trim()) {
+        newErrors.correctAnswer_gujarati =
+          "Gujarati correct answer is required";
+      }
+      if (!form.correctAnswer_hindi.trim()) {
+        newErrors.correctAnswer_hindi = "Hindi correct answer is required";
+      }
     }
 
     // Validate video selection for video questions
@@ -107,8 +110,22 @@ const QuestionForm = ({
       return;
     }
 
+    // Prepare form data based on question type
+    let formData = { ...form };
+
+    // For daily questions, don't include correct answer fields
+    if (questionType === "daily") {
+      const {
+        correctAnswer_english,
+        correctAnswer_gujarati,
+        correctAnswer_hindi,
+        ...dailyFormData
+      } = form;
+      formData = dailyFormData;
+    }
+
     // Just call onSubmit - let the parent handle the API calls
-    onSubmit(form);
+    onSubmit(formData);
   };
 
   const handleInputChange = (field, value) => {
@@ -199,49 +216,53 @@ const QuestionForm = ({
         )}
 
         {/* Question Text - Multi-Language */}
-        <MultiLanguageInput
-          label="Question Text"
-          icon="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          values={{
-            questionText_english: form.questionText_english,
-            questionText_gujarati: form.questionText_gujarati,
-            questionText_hindi: form.questionText_hindi,
-          }}
-          onChange={(values) => {
-            setForm((f) => ({
-              ...f,
-              questionText_english: values.questionText_english,
-              questionText_gujarati: values.questionText_gujarati,
-              questionText_hindi: values.questionText_hindi,
-            }));
-          }}
-          errors={errors}
-          type="textarea"
-          rows={3}
-        />
+        
+          <MultiLanguageInput
+            label="Question Text"
+            icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            values={{
+              questionText_english: form.questionText_english,
+              questionText_gujarati: form.questionText_gujarati,
+              questionText_hindi: form.questionText_hindi,
+            }}
+            onChange={(values) => {
+              setForm((f) => ({
+                ...f,
+                questionText_english: values.questionText_english,
+                questionText_gujarati: values.questionText_gujarati,
+                questionText_hindi: values.questionText_hindi,
+              }));
+            }}
+            errors={errors}
+            type="textarea"
+            rows={3}
+            sectionClassName=""
+          />
 
-        {/* Correct Answer - Multi-Language */}
-        <MultiLanguageInput
-          label="Correct Answer"
-          icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-          values={{
-            correctAnswer_english: form.correctAnswer_english,
-            correctAnswer_gujarati: form.correctAnswer_gujarati,
-            correctAnswer_hindi: form.correctAnswer_hindi,
-          }}
-          onChange={(values) => {
-            setForm((f) => ({
-              ...f,
-              correctAnswer_english: values.correctAnswer_english,
-              correctAnswer_gujarati: values.correctAnswer_gujarati,
-              correctAnswer_hindi: values.correctAnswer_hindi,
-            }));
-          }}
-          errors={errors}
-          type="textarea"
-          rows={3}
-          sectionClassName="from-amber-50 to-yellow-50 border-amber-200"
-        />
+        {/* Correct Answer - Multi-Language (only for video questions) */}
+        {questionType === "video" && (
+          <MultiLanguageInput
+            label="Correct Answer"
+            icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            values={{
+              correctAnswer_english: form.correctAnswer_english,
+              correctAnswer_gujarati: form.correctAnswer_gujarati,
+              correctAnswer_hindi: form.correctAnswer_hindi,
+            }}
+            onChange={(values) => {
+              setForm((f) => ({
+                ...f,
+                correctAnswer_english: values.correctAnswer_english,
+                correctAnswer_gujarati: values.correctAnswer_gujarati,
+                correctAnswer_hindi: values.correctAnswer_hindi,
+              }));
+            }}
+            errors={errors}
+            type="textarea"
+            rows={3}
+            sectionClassName="from-amber-50 to-yellow-50 border-amber-200"
+          />
+        )}
 
         {/* Form Actions */}
         <div className="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">

@@ -58,19 +58,62 @@ const BranchForm = ({
 
   const validate = () => {
     const required = (label) => (v) => !v ? `${label} is required.` : null;
+    const numberRule = (label) => (v) => {
+      if (!v) return null; // Allow empty for optional fields
+      const num = Number(v);
+      return isNaN(num) ? `${label} must be a valid number.` : null;
+    };
+    const pincodeRule = (v) => {
+      if (!v) return "Pincode is required.";
+      const num = Number(v);
+      if (isNaN(num)) return "Pincode must be a valid number.";
+      if (v.length !== 6) return "Pincode must be 6 digits.";
+      return null;
+    };
+    const mobileRule = (v) => {
+      if (!v) return "Mobile number is required.";
+      const num = Number(v);
+      if (isNaN(num)) return "Mobile number must be a valid number.";
+      if (v.length !== 10) return "Mobile number must be 10 digits.";
+      return null;
+    };
+    const latitudeRule = (v) => {
+      if (!v) return null; // Optional field
+      const num = Number(v);
+      if (isNaN(num)) return "Latitude must be a valid number.";
+      if (num < -90 || num > 90) return "Latitude must be between -90 and 90.";
+      return null;
+    };
+    const longitudeRule = (v) => {
+      if (!v) return null; // Optional field
+      const num = Number(v);
+      if (isNaN(num)) return "Longitude must be a valid number.";
+      if (num < -180 || num > 180)
+        return "Longitude must be between -180 and 180.";
+      return null;
+    };
+
     const errs = validateForm({
       name: { value: form.name, rules: [required("Name")] },
       email: { value: form.email, rules: [validateEmail] },
       city: { value: form.city, rules: [required("City")] },
       state: { value: form.state, rules: [required("State")] },
-      pincode: { value: form.pincode, rules: [required("Pincode")] },
+      pincode: { value: form.pincode, rules: [pincodeRule] },
       mobilePrefix: {
         value: form.mobilePrefix,
         rules: [required("Mobile prefix")],
       },
       mobileNumber: {
         value: form.mobileNumber,
-        rules: [required("Mobile number")],
+        rules: [mobileRule],
+      },
+      latitude: {
+        value: form.latitude,
+        rules: [latitudeRule],
+      },
+      longitude: {
+        value: form.longitude,
+        rules: [longitudeRule],
       },
     });
     setErrors(errs);
@@ -157,16 +200,20 @@ const BranchForm = ({
         </div>
         <div>
           <label className="block mb-1 font-semibold text-gray-700">
-            Pincode
+            Pincode *
           </label>
           <input
-            type="text"
+            type="number"
             value={form.pincode}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, pincode: e.target.value }))
-            }
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value.length <= 6) {
+                setForm((f) => ({ ...f, pincode: value }));
+              }
+            }}
             className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
             placeholder="400001"
+            maxLength={6}
           />
           {errors.pincode && (
             <p className="text-red-500 text-sm mt-1">{errors.pincode}</p>
@@ -177,31 +224,43 @@ const BranchForm = ({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block mb-1 font-semibold text-gray-700">
-            Latitude
+            Latitude <span className="text-gray-500 text-sm">(Optional)</span>
           </label>
           <input
-            type="text"
+            type="number"
+            step="any"
             value={form.latitude}
             onChange={(e) =>
               setForm((f) => ({ ...f, latitude: e.target.value }))
             }
             className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
             placeholder="19.0760"
+            min="-90"
+            max="90"
           />
+          {errors.latitude && (
+            <p className="text-red-500 text-sm mt-1">{errors.latitude}</p>
+          )}
         </div>
         <div>
           <label className="block mb-1 font-semibold text-gray-700">
-            Longitude
+            Longitude <span className="text-gray-500 text-sm">(Optional)</span>
           </label>
           <input
-            type="text"
+            type="number"
+            step="any"
             value={form.longitude}
             onChange={(e) =>
               setForm((f) => ({ ...f, longitude: e.target.value }))
             }
             className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
             placeholder="72.8777"
+            min="-180"
+            max="180"
           />
+          {errors.longitude && (
+            <p className="text-red-500 text-sm mt-1">{errors.longitude}</p>
+          )}
         </div>
       </div>
 
@@ -225,16 +284,20 @@ const BranchForm = ({
         </div>
         <div className="col-span-2">
           <label className="block mb-1 font-semibold text-gray-700">
-            Mobile
+            Mobile *
           </label>
           <input
-            type="text"
+            type="number"
             value={form.mobileNumber}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, mobileNumber: e.target.value }))
-            }
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value.length <= 10) {
+                setForm((f) => ({ ...f, mobileNumber: value }));
+              }
+            }}
             className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
             placeholder="9123456789"
+            maxLength={10}
           />
           {errors.mobileNumber && (
             <p className="text-red-500 text-sm mt-1">{errors.mobileNumber}</p>

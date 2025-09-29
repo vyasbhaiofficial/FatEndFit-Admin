@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import RoleGuard from "@/components/RoleGuard";
+import ConfirmationDialog from "@/components/ConfirmationDialog";
 import { Header, Button } from "@/utils/header";
 import Drawer from "@/utils/formanimation";
 import toast from "react-hot-toast";
@@ -20,6 +21,8 @@ const VideoPage = () => {
   const [error, setError] = useState("");
   const [videos, setVideos] = useState([]);
   const [editing, setEditing] = useState(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [videoToDelete, setVideoToDelete] = useState(null);
   const fetchList = async () => {
     try {
       setListLoading(true);
@@ -65,10 +68,17 @@ const VideoPage = () => {
   };
 
   const handleDelete = async (id) => {
+    setVideoToDelete(id);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!videoToDelete) return;
+
     try {
       setLoading(true);
       setError("");
-      await deleteVideoById(id);
+      await deleteVideoById(videoToDelete);
       await fetchList();
       toast.success("Video deleted successfully!");
     } catch (err) {
@@ -76,6 +86,8 @@ const VideoPage = () => {
       toast.error(err?.response?.data?.message || "Failed to delete video");
     } finally {
       setLoading(false);
+      setShowDeleteDialog(false);
+      setVideoToDelete(null);
     }
   };
 
@@ -117,6 +129,16 @@ const VideoPage = () => {
             submitLabel={editing ? "Update" : "Create"}
           />
         </Drawer>
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmationDialog
+          isOpen={showDeleteDialog}
+          onClose={() => setShowDeleteDialog(false)}
+          onConfirm={confirmDelete}
+          title="Delete Video"
+          message="Are you sure you want to delete this video? This action cannot be undone."
+          type="danger"
+        />
       </div>
     </RoleGuard>
   );

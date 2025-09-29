@@ -255,7 +255,7 @@ const MultiLanguageInput = ({
               />
             </svg>
           )}
-          {label} (Multi-Language)
+          {label}
         </h3>
         {showCopyCheckbox && (
           <label className="flex items-center cursor-pointer group">

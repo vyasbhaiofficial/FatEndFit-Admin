@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import Loader from "@/utils/loader";
 import NotFoundCard from "@/components/NotFoundCard";
 import { ActionButton } from "@/utils/actionbutton";
-import ConfirmationDialog from "@/components/ConfirmationDialog";
 
 const QuestionTable = ({
   items,
@@ -15,12 +14,6 @@ const QuestionTable = ({
   selectedLanguage = "english", // Default to english if not provided
 }) => {
   const [expandedCards, setExpandedCards] = useState({});
-  const [deleteDialog, setDeleteDialog] = useState({
-    isOpen: false,
-    itemId: null,
-    itemName: null,
-  });
-
   const toggleCard = (cardId) => {
     setExpandedCards((prev) => ({
       ...prev,
@@ -29,30 +22,7 @@ const QuestionTable = ({
   };
 
   const handleDeleteClick = (itemId, itemName) => {
-    setDeleteDialog({
-      isOpen: true,
-      itemId,
-      itemName,
-    });
-  };
-
-  const handleDeleteConfirm = () => {
-    if (deleteDialog.itemId) {
-      onDelete(deleteDialog.itemId);
-    }
-    setDeleteDialog({
-      isOpen: false,
-      itemId: null,
-      itemName: null,
-    });
-  };
-
-  const handleDeleteCancel = () => {
-    setDeleteDialog({
-      isOpen: false,
-      itemId: null,
-      itemName: null,
-    });
+    onDelete(itemId);
   };
   if (loading) {
     return (
@@ -144,12 +114,6 @@ const QuestionTable = ({
                         </span>
                       </div>
                     )}
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                      <span className="font-mono text-xs">
-                        ID: {question._id.slice(-8)}
-                      </span>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -258,136 +222,66 @@ const QuestionTable = ({
                 </div>
               </div>
 
-              {/* Correct Answer Row */}
-              <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl p-5 border border-amber-200 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center shadow-md">
-                    <span className="text-sm font-bold text-white">A</span>
+              {/* Correct Answer Row - Only for video questions */}
+              {questionType === "video" && (
+                <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl p-5 border border-amber-200 shadow-sm">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center shadow-md">
+                      <span className="text-sm font-bold text-white">A</span>
+                    </div>
+                    <h4 className="text-lg font-bold text-gray-800">
+                      Correct Answer
+                    </h4>
                   </div>
-                  <h4 className="text-lg font-bold text-gray-800">
-                    Correct Answer
-                  </h4>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* English Answer */}
-                  <div>
-                    <p className="text-xs font-medium text-gray-600 mb-2">
-                      English
-                    </p>
-                    <p className="text-sm text-gray-800 bg-white p-3 rounded-lg border border-amber-200 h-24 overflow-y-auto">
-                      {getTextInLanguage(
-                        question.correctAnswerMultiLang ||
-                          question.correctAnswer,
-                        "english"
-                      )}
-                    </p>
-                  </div>
-
-                  {/* Gujarati Answer */}
-                  <div>
-                    <p className="text-xs font-medium text-gray-600 mb-2">
-                      Gujarati
-                    </p>
-                    <p className="text-sm text-gray-800 bg-white p-3 rounded-lg border border-amber-200 h-24 overflow-y-auto">
-                      {getTextInLanguage(
-                        question.correctAnswerMultiLang ||
-                          question.correctAnswer,
-                        "gujarati"
-                      )}
-                    </p>
-                  </div>
-
-                  {/* Hindi Answer */}
-                  <div>
-                    <p className="text-xs font-medium text-gray-600 mb-2">
-                      Hindi
-                    </p>
-                    <p className="text-sm text-gray-800 bg-white p-3 rounded-lg border border-amber-200 h-24 overflow-y-auto">
-                      {getTextInLanguage(
-                        question.correctAnswerMultiLang ||
-                          question.correctAnswer,
-                        "hindi"
-                      )}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Additional Details */}
-              <div className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-xl p-5 border border-yellow-200 shadow-sm">
-                <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-3">
-                  <div className="w-8 h-8 bg-yellow-600 rounded-full flex items-center justify-center shadow-md">
-                    <svg
-                      className="w-4 h-4 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </div>
-                  Additional Details
-                </h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium text-gray-600">
-                      Question Type:
-                    </span>
-                    <p className="text-gray-800">
-                      {question.type === 1
-                        ? "Video Question"
-                        : "Daily Question"}
-                    </p>
-                  </div>
-                  {question.section && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* English Answer */}
                     <div>
-                      <span className="font-medium text-gray-600">
-                        Section:
-                      </span>
-                      <p className="text-gray-800 capitalize">
-                        {question.section}
+                      <p className="text-xs font-medium text-gray-600 mb-2">
+                        English
+                      </p>
+                      <p className="text-sm text-gray-800 bg-white p-3 rounded-lg border border-amber-200 h-24 overflow-y-auto">
+                        {getTextInLanguage(
+                          question.correctAnswerMultiLang ||
+                            question.correctAnswer,
+                          "english"
+                        )}
                       </p>
                     </div>
-                  )}
-                  <div>
-                    <span className="font-medium text-gray-600">Created:</span>
-                    <p className="text-gray-800">
-                      {question.createdAt
-                        ? new Date(question.createdAt).toLocaleDateString()
-                        : "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Updated:</span>
-                    <p className="text-gray-800">
-                      {question.updatedAt
-                        ? new Date(question.updatedAt).toLocaleDateString()
-                        : "N/A"}
-                    </p>
+
+                    {/* Gujarati Answer */}
+                    <div>
+                      <p className="text-xs font-medium text-gray-600 mb-2">
+                        Gujarati
+                      </p>
+                      <p className="text-sm text-gray-800 bg-white p-3 rounded-lg border border-amber-200 h-24 overflow-y-auto">
+                        {getTextInLanguage(
+                          question.correctAnswerMultiLang ||
+                            question.correctAnswer,
+                          "gujarati"
+                        )}
+                      </p>
+                    </div>
+
+                    {/* Hindi Answer */}
+                    <div>
+                      <p className="text-xs font-medium text-gray-600 mb-2">
+                        Hindi
+                      </p>
+                      <p className="text-sm text-gray-800 bg-white p-3 rounded-lg border border-amber-200 h-24 overflow-y-auto">
+                        {getTextInLanguage(
+                          question.correctAnswerMultiLang ||
+                            question.correctAnswer,
+                          "hindi"
+                        )}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
       ))}
-
-      {/* Delete Confirmation Dialog */}
-      <ConfirmationDialog
-        isOpen={deleteDialog.isOpen}
-        onClose={handleDeleteCancel}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Question"
-        message={`Are you sure you want to delete "${deleteDialog.itemName}"? This action cannot be undone.`}
-        confirmText="Delete"
-        cancelText="Cancel"
-        type="danger"
-      />
     </div>
   );
 };

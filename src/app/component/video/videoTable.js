@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import Loader from "@/utils/loader";
 import NotFoundCard from "@/components/NotFoundCard";
 import { ActionButton } from "@/utils/actionbutton";
-import ConfirmationDialog from "@/components/ConfirmationDialog";
 
 import { API_BASE } from "@/Api/AllApi";
 
@@ -30,12 +29,6 @@ export const toAbsolute = (path = "") => {
 
 const VideoTable = ({ items, loading, onEdit, onDelete }) => {
   const [expandedCards, setExpandedCards] = useState({});
-  const [deleteDialog, setDeleteDialog] = useState({
-    isOpen: false,
-    itemId: null,
-    itemName: null,
-  });
-
   const toggleCard = (cardId) => {
     setExpandedCards((prev) => ({
       ...prev,
@@ -44,30 +37,7 @@ const VideoTable = ({ items, loading, onEdit, onDelete }) => {
   };
 
   const handleDeleteClick = (itemId, itemName) => {
-    setDeleteDialog({
-      isOpen: true,
-      itemId,
-      itemName,
-    });
-  };
-
-  const handleDeleteConfirm = () => {
-    if (deleteDialog.itemId) {
-      onDelete(deleteDialog.itemId);
-    }
-    setDeleteDialog({
-      isOpen: false,
-      itemId: null,
-      itemName: null,
-    });
-  };
-
-  const handleDeleteCancel = () => {
-    setDeleteDialog({
-      isOpen: false,
-      itemId: null,
-      itemName: null,
-    });
+    onDelete(itemId);
   };
 
   if (loading) {
@@ -496,18 +466,6 @@ const VideoTable = ({ items, loading, onEdit, onDelete }) => {
           />
         </div>
       )}
-
-      {/* Delete Confirmation Dialog */}
-      <ConfirmationDialog
-        isOpen={deleteDialog.isOpen}
-        onClose={handleDeleteCancel}
-        onConfirm={handleDeleteConfirm}
-        title="Delete Video"
-        message={`Are you sure you want to delete "${deleteDialog.itemName}"? This action cannot be undone.`}
-        confirmText="Delete"
-        cancelText="Cancel"
-        type="danger"
-      />
     </div>
   );
 };

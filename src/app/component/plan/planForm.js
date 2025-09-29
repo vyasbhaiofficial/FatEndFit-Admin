@@ -29,15 +29,20 @@ const PlanForm = ({
 
   const validate = () => {
     const required = (label) => (v) => !v ? `${label} is required` : null;
-    const numberRule = (label) => (v) =>
-      v === "" || isNaN(Number(v)) ? `${label} must be a number` : null;
+    const positiveNumberRule = (label) => (v) => {
+      if (!v) return `${label} is required`;
+      const num = Number(v);
+      if (isNaN(num)) return `${label} must be a valid number`;
+      if (num <= 0) return `${label} must be greater than 0`;
+      return null;
+    };
     const errs = validateForm({
       name: { value: form.name, rules: [required("Name")] },
       description: {
         value: form.description,
         rules: [required("Description")],
       },
-      days: { value: form.days, rules: [required("Days"), numberRule("Days")] },
+      days: { value: form.days, rules: [positiveNumberRule("Days")] },
     });
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -86,13 +91,20 @@ const PlanForm = ({
       </div>
 
       <div>
-        <label className="block mb-1 font-semibold text-gray-700">Days</label>
+        <label className="block mb-1 font-semibold text-gray-700">Days *</label>
         <input
-          type="text"
+          type="number"
           value={form.days}
-          onChange={(e) => setForm((f) => ({ ...f, days: e.target.value }))}
+          onChange={(e) => {
+            const value = e.target.value;
+            // Only allow positive numbers
+            if (value === "" || (!isNaN(value) && Number(value) > 0)) {
+              setForm((f) => ({ ...f, days: value }));
+            }
+          }}
           className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
           placeholder="e.g. 30"
+          min="1"
         />
         {errors.days && (
           <p className="text-red-500 text-sm mt-1">{errors.days}</p>
