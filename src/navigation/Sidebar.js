@@ -12,6 +12,7 @@ import {
   MdPerson,
   MdVideoLibrary,
   MdQuiz,
+  MdSettings,
 } from "react-icons/md";
 import { MdChevronLeft, MdChevronRight } from "react-icons/md";
 import { FiMessageCircle } from "react-icons/fi";
@@ -190,6 +191,24 @@ const Sidebar = () => {
             {!isCollapsed && <span>Quick Replies</span>}
           </Link>
         </div>
+
+        {/* Section: Settings (Admin only) */}
+        {role === "Admin" && (
+          <div>
+            {!isCollapsed && (
+              <h2 className="text-xs font-semibold text-gray-400 uppercase mb-2">
+                Settings
+              </h2>
+            )}
+            <Link
+              href="/component/settings"
+              className={linkClasses("/component/settings")}
+            >
+              <MdSettings size={20} />
+              {!isCollapsed && <span>App Settings</span>}
+            </Link>
+          </div>
+        )}
       </nav>
     </aside>
   );

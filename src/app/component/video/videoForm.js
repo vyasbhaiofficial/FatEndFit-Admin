@@ -299,7 +299,7 @@ const VideoForm = ({
     { label: "Webinar/Live", value: 2 },
     { label: "Testimonial", value: 3 },
     { label: "Categoywise Testimonial", value: 4 },
-    { label: "Setting", value: 5 },
+    { label: "Resume Plan", value: 5 },
   ];
 
   const videoTypeOptions = [

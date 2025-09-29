@@ -164,8 +164,10 @@ export default function ChatPage() {
       formData.append("image", file, `${file.name.replace(/\s/g, "_")}`);
 
       // Get URL from your API
-      const fileUrl = resolveAudioUrl(await generateUrl(formData));
-      console.log("File URL:", fileUrl);
+      const fullUrl = resolveAudioUrl(await generateUrl(formData));
+      const relativeUrl = storeRelativeUrl(await generateUrl(formData));
+      console.log("File full URL:", fullUrl);
+      console.log("File relative URL for storage:", relativeUrl);
 
       // Determine file type
       let fileType = "file";
@@ -185,11 +187,13 @@ export default function ChatPage() {
         senderName: "You",
         type: fileType,
         text: null,
-        audioUrl: fileUrl, // Using audioUrl for compatibility
+        // For admin side: use audioUrl for voice, mediaUrl for image/video
+        audioUrl: fileType === "voice" ? relativeUrl : null,
+        mediaUrl: fileType !== "voice" ? relativeUrl : null,
         fileName: file.name,
         fileSize: file.size,
         fileType: file.type,
-        duration: null,
+        duration: null, // Will be set for voice messages
         status: "sent",
         uploadProgress: 100,
         createdAt: nowMs,
@@ -242,6 +246,48 @@ export default function ChatPage() {
 
     // Default fallback
     return `${API_BASE.replace(/\/$/, "")}/uploads/${url}`;
+  };
+
+  // Store only relative URL in Firebase
+  const storeRelativeUrl = (input) => {
+    if (!input) return input;
+
+    // Handle object response from API
+    if (typeof input === "object") {
+      const candidate =
+        input.data ||
+        input.url ||
+        input.path ||
+        input.fileUrl ||
+        input.Location ||
+        null;
+      if (candidate) input = candidate;
+    }
+
+    let url = String(input).trim().replace(/\\/g, "/");
+
+    // If it's a full URL, extract only the relative path
+    if (/^https?:\/\//i.test(url)) {
+      // Extract path after /api/v1/uploads/
+      const match = url.match(/\/api\/v1\/uploads\/(.+)$/);
+      if (match) {
+        return `uploads/${match[1]}`;
+      }
+      return url;
+    }
+
+    // If backend gave 'uploads\filename' or 'uploads/filename', normalize it
+    if (/^uploads[\\\/]/i.test(url)) {
+      return url.replace(/\\/g, "/");
+    }
+
+    // If it's just a filename, add the uploads path
+    if (!url.includes("/")) {
+      return `uploads/${url}`;
+    }
+
+    // Return as is if it's already a relative path
+    return url;
   };
 
   // Fetch commands from API
@@ -442,8 +488,9 @@ export default function ChatPage() {
           senderName: "You",
           type: "voice",
           text: null,
-          audioUrl: resolveAudioUrl(cmd.audioUrl),
-          duration: null,
+          audioUrl: storeRelativeUrl(cmd.audioUrl), // Store only relative URL in Firebase
+          mediaUrl: null, // Not used for voice
+          duration: cmd.duration || null, // Use duration from command if available
           status: "sent",
           uploadProgress: 100,
           createdAt: nowMs,
@@ -475,8 +522,22 @@ export default function ChatPage() {
       formData.append("image", audioBlob, `voice_${messageId}.webm`);
 
       // Get URL from your API
-      const audioUrl = resolveAudioUrl(await generateUrl(formData));
-      console.log("Voice audioUrl:", audioUrl);
+      const fullUrl = resolveAudioUrl(await generateUrl(formData));
+      const relativeUrl = storeRelativeUrl(await generateUrl(formData));
+      console.log("Voice full URL:", fullUrl);
+      console.log("Voice relative URL for storage:", relativeUrl);
+
+      // Calculate duration from audio blob
+      const audio = new Audio();
+      const duration = await new Promise((resolve) => {
+        audio.onloadedmetadata = () => {
+          resolve(Math.round(audio.duration));
+        };
+        audio.onerror = () => {
+          resolve(0); // Fallback if duration can't be calculated
+        };
+        audio.src = URL.createObjectURL(audioBlob);
+      });
 
       // Get the current chat data to get customerCareId
       const chatDoc = await getDoc(chatRef);
@@ -490,11 +551,12 @@ export default function ChatPage() {
         senderName: "You",
         type: "voice",
         text: null,
-        audioUrl: audioUrl,
+        audioUrl: relativeUrl, // Store only relative URL in Firebase
+        mediaUrl: null, // Not used for voice
         fileName: `voice_${messageId}.webm`,
         fileSize: audioBlob.size,
         fileType: audioBlob.type,
-        duration: null,
+        duration: duration, // Store actual duration
         status: "sent",
         uploadProgress: 100,
         createdAt: nowMs,
@@ -762,7 +824,7 @@ export default function ChatPage() {
           {selectedUser ? (
             <>
               {/* Chat Header */}
-              <div className="flex items-center justify-between p-6 bg-gradient-to-r from-white/80 to-yellow-50/80 backdrop-blur-xl shadow-lg border-b border-yellow-200">
+              <div className="flex items-center justify-between p-5 bg-gradient-to-r from-white/80 to-yellow-50/80 backdrop-blur-xl shadow-lg border-b border-yellow-200">
                 <div className="flex items-center gap-4">
                   <div className="relative">
                     <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-300 text-white flex items-center justify-center font-bold text-xl shadow-lg">
@@ -821,7 +883,8 @@ export default function ChatPage() {
                         >
                           {/* Message Content */}
                           <div className="p-4">
-                            {msg.type === "voice" && msg.audioUrl ? (
+                            {msg.type === "voice" &&
+                            (msg.audioUrl || msg.mediaUrl) ? (
                               <div className="flex items-center gap-3">
                                 <button
                                   onClick={() => toggleAudioPlayback(msg.id)}
@@ -836,6 +899,11 @@ export default function ChatPage() {
                                 <div>
                                   <p className="text-sm font-medium">
                                     Voice Message
+                                    {msg.duration && (
+                                      <span className="text-xs opacity-75 ml-2">
+                                        ({msg.duration}s)
+                                      </span>
+                                    )}
                                   </p>
                                   <p className="text-xs opacity-75">
                                     Tap to play
@@ -843,18 +911,23 @@ export default function ChatPage() {
                                 </div>
                                 {playingAudio === msg.id && (
                                   <audio
-                                    src={msg.audioUrl}
+                                    src={resolveAudioUrl(
+                                      msg.audioUrl || msg.mediaUrl
+                                    )}
                                     autoPlay
                                     onEnded={() => setPlayingAudio(null)}
                                     className="hidden"
                                   />
                                 )}
                               </div>
-                            ) : msg.type === "video" && msg.audioUrl ? (
+                            ) : msg.type === "video" &&
+                              (msg.audioUrl || msg.mediaUrl) ? (
                               <div className="space-y-2">
                                 <div className="relative">
                                   <video
-                                    src={resolveAudioUrl(msg.audioUrl)}
+                                    src={resolveAudioUrl(
+                                      msg.audioUrl || msg.mediaUrl
+                                    )}
                                     controls
                                     className="max-w-full max-h-64 rounded-2xl shadow-lg"
                                     poster={msg.thumbnail}
@@ -866,15 +939,20 @@ export default function ChatPage() {
                                   </p>
                                 )}
                               </div>
-                            ) : msg.type === "image" && msg.audioUrl ? (
+                            ) : msg.type === "image" &&
+                              (msg.audioUrl || msg.mediaUrl) ? (
                               <div className="space-y-2">
                                 <img
-                                  src={resolveAudioUrl(msg.audioUrl)}
+                                  src={resolveAudioUrl(
+                                    msg.audioUrl || msg.mediaUrl
+                                  )}
                                   alt="Shared image"
                                   className="max-w-full max-h-64 rounded-2xl shadow-lg object-cover cursor-pointer hover:scale-105 transition-transform"
                                   onClick={() =>
                                     window.open(
-                                      resolveAudioUrl(msg.audioUrl),
+                                      resolveAudioUrl(
+                                        msg.audioUrl || msg.mediaUrl
+                                      ),
                                       "_blank"
                                     )
                                   }
@@ -886,7 +964,7 @@ export default function ChatPage() {
                                 )}
                               </div>
                             ) : msg.type === "file" &&
-                              (msg.audioUrl || msg.fileUrl) ? (
+                              (msg.audioUrl || msg.mediaUrl || msg.fileUrl) ? (
                               <div className="flex items-center gap-3 p-3 bg-white/20 rounded-2xl">
                                 {getFileIcon(msg.fileType)}
                                 <div className="flex-1 min-w-0">
@@ -899,7 +977,10 @@ export default function ChatPage() {
                                 </div>
                                 <a
                                   href={
-                                    msg.fileUrl || resolveAudioUrl(msg.audioUrl)
+                                    msg.fileUrl ||
+                                    resolveAudioUrl(
+                                      msg.audioUrl || msg.mediaUrl
+                                    )
                                   }
                                   download
                                   className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"

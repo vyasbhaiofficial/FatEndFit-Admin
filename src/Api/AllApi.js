@@ -636,3 +636,18 @@ export const getUserPlanStatus = async (userId) => {
   });
   return res.data;
 };
+
+// Settings API
+export const getSetting = async () => {
+  const res = await axios.get(`${API_BASE}/admin/setting/get`, {
+    headers: getAuthHeaders(),
+  });
+  return res.data;
+};
+
+export const updateSettingById = async (id, data) => {
+  const res = await axios.put(`${API_BASE}/admin/setting/update/${id}`, data, {
+    headers: getAuthHeaders(),
+  });
+  return res.data;
+};
