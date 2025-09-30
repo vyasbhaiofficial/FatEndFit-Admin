@@ -42,7 +42,13 @@ const resolveAudioUrl = (input) => {
 
 import NotFoundCard from "@/components/NotFoundCard";
 
-const CommandTable = ({ commands, onEdit, onDelete }) => {
+const CommandTable = ({
+  commands,
+  onEdit,
+  onDelete,
+  currentRole,
+  currentAdminId,
+}) => {
   const [deleteDialog, setDeleteDialog] = useState({
     isOpen: false,
     itemId: null,
@@ -88,78 +94,93 @@ const CommandTable = ({ commands, onEdit, onDelete }) => {
 
   return (
     <>
-    <div className="overflow-x-auto shadow-md rounded-2xl border border-gray-200 bg-white">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gradient-to-r from-yellow-400 to-amber-300">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Title
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Type
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Description / Audio
-            </th>
-            <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
-              Actions
-            </th>
-          </tr>
-        </thead>
-
-        <tbody className="bg-white divide-y divide-gray-200">
-          {commands.map((cmd) => (
-            <tr
-              key={cmd._id}
-              className="hover:bg-yellow-50 transition-all duration-200 cursor-pointer"
-            >
-              <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-800">
-                {cmd.title}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    cmd.type === "text"
-                      ? "bg-yellow-400 text-yellow-800"
-                      : "bg-yellow-400 text-yellow-800"
-                  }`}
-                >
-                  {cmd.type}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                {cmd.type === "text" && (
-                  <p className="text-sm">{cmd.description}</p>
-                )}
-                {cmd.type === "audio" && cmd.audioUrl && (
-                  <audio controls className="w-full mt-1 rounded-lg  ">
-                    <source
-                      src={resolveAudioUrl(cmd.audioUrl)}
-                      type="audio/mpeg"
-                    />
-                    Your browser does not support audio.
-                  </audio>
-                )}
-              </td>
-              <td className="px-6 py-4 text-center space-x-2">
-                <ActionButton type="edit" onClick={() => onEdit(cmd)} />
-                <ActionButton type="delete" onClick={() => handleDeleteClick(cmd._id, cmd.command_english || cmd.command || 'Command')} />
-              </td>
+      <div className="overflow-x-auto shadow-md rounded-2xl border border-gray-200 bg-white">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gradient-to-r from-yellow-400 to-amber-300">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                Title
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                Type
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                Description / Audio
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-    
-    {/* Delete Confirmation Dialog */}
-    <ConfirmationDialog
-      isOpen={deleteDialog.isOpen}
-      onClose={handleDeleteCancel}
-      onConfirm={handleDeleteConfirm}
-      title="Delete Command"
-      message={`Are you sure you want to delete "${deleteDialog.itemName}"? This action cannot be undone.`}
-      confirmText="Delete"
-      cancelText="Cancel"
+          </thead>
+
+          <tbody className="bg-white divide-y divide-gray-200">
+            {commands.map((cmd) => {
+              const isOwner = String(cmd.createdBy) === String(currentAdminId);
+              const canModify = currentRole !== "subadmin" || isOwner;
+              return (
+                <tr
+                  key={cmd._id}
+                  className="hover:bg-yellow-50 transition-all duration-200 cursor-pointer"
+                >
+                  <td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-800">
+                    {cmd.title}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        cmd.type === "text"
+                          ? "bg-yellow-400 text-yellow-800"
+                          : "bg-yellow-400 text-yellow-800"
+                      }`}
+                    >
+                      {cmd.type}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-700">
+                    {cmd.type === "text" && (
+                      <p className="text-sm">{cmd.description}</p>
+                    )}
+                    {cmd.type === "audio" && cmd.audioUrl && (
+                      <audio controls className="w-full mt-1 rounded-lg  ">
+                        <source
+                          src={resolveAudioUrl(cmd.audioUrl)}
+                          type="audio/mpeg"
+                        />
+                        Your browser does not support audio.
+                      </audio>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-center space-x-2">
+                    <ActionButton
+                      type="edit"
+                      disabled={!canModify}
+                      onClick={() => canModify && onEdit(cmd)}
+                    />
+                    <ActionButton
+                      type="delete"
+                      disabled={!canModify}
+                      onClick={() =>
+                        canModify &&
+                        handleDeleteClick(cmd._id, cmd.title || "Command")
+                      }
+                    />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={deleteDialog.isOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Command"
+        message={`Are you sure you want to delete "${deleteDialog.itemName}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
         type="danger"
       />
     </>

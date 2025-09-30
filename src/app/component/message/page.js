@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   getCommands,
   createCommand,
@@ -19,6 +20,8 @@ const CommandPage = () => {
   const [loading, setLoading] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingCommand, setEditingCommand] = useState(null);
+  const { role, user } = useAuth();
+  const currentAdminId = user?._id || user?.id || null;
 
   const fetchCommands = async () => {
     setLoading(true);
@@ -84,11 +87,30 @@ const CommandPage = () => {
       ) : (
         <CommandTable
           commands={commands}
+          currentRole={role}
+          currentAdminId={currentAdminId}
           onEdit={(cmd) => {
+            // Guard: subadmin may only edit own commands
+            if (
+              role === "subadmin" &&
+              String(cmd.createdBy) !== String(currentAdminId)
+            ) {
+              return;
+            }
             setEditingCommand(cmd);
             setDrawerOpen(true);
           }}
-          onDelete={handleDelete}
+          onDelete={async (id) => {
+            const cmd = commands.find((c) => c._id === id);
+            if (
+              cmd &&
+              role === "subadmin" &&
+              String(cmd.createdBy) !== String(currentAdminId)
+            ) {
+              return;
+            }
+            await handleDelete(id);
+          }}
         />
       )}
 

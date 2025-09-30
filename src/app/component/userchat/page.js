@@ -61,9 +61,15 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { useMessages } from "../../../hooks/useMessages";
-import { generateUrl, getCommands, API_BASE } from "../../../Api/AllApi";
+import {
+  generateUrl,
+  getCommands,
+  API_BASE,
+  getAllBranches,
+} from "../../../Api/AllApi";
 
 import Loader from "../../../utils/loader";
+import Dropdown from "../../../utils/dropdown";
 
 // This will be replaced with customerCareId from chat data
 
@@ -90,6 +96,10 @@ export default function ChatPage() {
   const [showFileOptions, setShowFileOptions] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [typingUsers, setTypingUsers] = useState(new Set());
+  // Branch state
+  const [allBranches, setAllBranches] = useState([]);
+  const [branchIdToName, setBranchIdToName] = useState({});
+  const [selectedBranchId, setSelectedBranchId] = useState("");
 
   const messagesEndRef = useRef(null);
   const [users, setUsers] = useState([]);
@@ -146,6 +156,25 @@ export default function ChatPage() {
   useEffect(() => {
     console.log("Commands fetched:", commands);
   }, [commands]);
+
+  // Load branches for admin filter and name resolution
+  useEffect(() => {
+    const loadBranches = async () => {
+      try {
+        const branches = await getAllBranches();
+        setAllBranches(branches || []);
+        const map = (branches || []).reduce((acc, b) => {
+          if (b && (b._id || b.id))
+            acc[b._id || b.id] = b.name || b.branchName || "Unnamed Branch";
+          return acc;
+        }, {});
+        setBranchIdToName(map);
+      } catch (e) {
+        console.error("Failed to load branches:", e);
+      }
+    };
+    loadBranches();
+  }, []);
   // File upload using your API
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -387,7 +416,7 @@ export default function ChatPage() {
             });
             console.log("Filtered users for subadmin:", usersList.length);
           }
-          // Admin sees all users - no filtering
+          // Admin sees all users - filtering by dropdown will apply later
 
           // Sort: unread messages first, then recent
           usersList.sort((a, b) => {
@@ -397,7 +426,16 @@ export default function ChatPage() {
             return (b.updatedAt || 0) - (a.updatedAt || 0);
           });
 
-          setUsers(usersList);
+          // Attach branch name (prefer customerCareId, fallback to branchId)
+          const usersWithBranchNames = usersList.map((u) => ({
+            ...u,
+            branchName:
+              branchIdToName[u?.customerCareId] ||
+              branchIdToName[u?.branchId] ||
+              "",
+          }));
+
+          setUsers(usersWithBranchNames);
           console.log("Users updated in real-time:", usersList.length);
           setLoading(false);
         } catch (e) {
@@ -416,7 +454,7 @@ export default function ChatPage() {
       console.log("Cleaning up real-time listener");
       unsubscribe();
     };
-  }, [role, branches]); // Removed chatId from dependencies
+  }, [role, branches, branchIdToName]); // Recompute when branch map updates
 
   // Separate effect to handle user selection when chatId changes (without refreshing users)
   useEffect(() => {
@@ -680,7 +718,7 @@ export default function ChatPage() {
     <div className="flex justify-center items-center">
       <div className="flex h-[800px] w-[91%]  bg-gradient-to-br from-yellow-50 via-amber-50 to-yellow-100">
         {/* Modern Sidebar */}
-        <div className="w-80 bg-white/80 backdrop-blur-xl rounded-xl shadow-2xl border-r border-yellow-200 flex flex-col overflow-hidden">
+        <div className="w-90 bg-white/80 backdrop-blur-xl rounded-xl shadow-2xl border-r border-yellow-200 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="p-6 bg-gradient-to-r from-yellow-400 to-amber-300 text-black">
             <h1 className="text-xl font-bold mb-2">Chat Dashboard</h1>
@@ -690,7 +728,7 @@ export default function ChatPage() {
           </div>
 
           {/* Search Bar */}
-          <div className="p-4 bg-white/50 backdrop-blur-sm">
+          <div className="p-4 bg-white/50 backdrop-blur-sm relative z-10">
             <div className="relative">
               <FiSearch
                 className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -712,6 +750,22 @@ export default function ChatPage() {
                 </button>
               )}
             </div>
+            {/* Branch Filter for Admin */}
+            {role !== "subadmin" && (
+              <div className="mt-3">
+                <Dropdown
+                  value={selectedBranchId}
+                  onChange={setSelectedBranchId}
+                  options={[
+                    { label: "All branches", value: "" },
+                    ...allBranches.map((b) => ({
+                      label: b.name || b.branchName || "Unnamed Branch",
+                      value: b._id || b.id,
+                    })),
+                  ]}
+                />
+              </div>
+            )}
           </div>
 
           {/* User List */}
@@ -722,93 +776,113 @@ export default function ChatPage() {
               </div>
             ) : filteredUsers.length > 0 ? (
               <div className="p-2 space-y-2">
-                {filteredUsers.map((user) => (
-                  <div
-                    key={user.id}
-                    onClick={() => {
-                      // Only update if different user to prevent unnecessary re-renders
-                      if (selectedUser?.id === user.id) return;
+                {filteredUsers
+                  .filter((user) => {
+                    if (role === "subadmin") return true; // already filtered above
+                    if (!selectedBranchId) return true;
+                    const userBranch = user.customerCareId || user.branchId;
+                    return userBranch === selectedBranchId;
+                  })
+                  .map((user) => (
+                    <div
+                      key={user.id}
+                      onClick={() => {
+                        // Only update if different user to prevent unnecessary re-renders
+                        if (selectedUser?.id === user.id) return;
 
-                      console.log("User clicked:", user.name);
-                      setSelectedUser(user);
-                      // Generate chat ID using user's customerCareId
-                      const newChatId = `${user.id}_${
-                        user.customerCareId || "admin"
-                      }`;
-                      console.log("Setting chat ID:", newChatId);
-                      setChatId(newChatId);
-                    }}
-                    className={`group flex items-center gap-4 p-4 cursor-pointer rounded-2xl mx-2 transition-all duration-300 hover:scale-[1.02] ${
-                      selectedUser?.id === user.id
-                        ? "bg-gradient-to-r from-yellow-400 to-amber-300 text-black shadow-xl transform scale-[1.02]"
-                        : "bg-white/60 hover:bg-white/80 hover:shadow-lg"
-                    }`}
-                  >
-                    {/* Avatar with online indicator */}
-                    <div className="relative">
-                      <div
-                        className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-white text-lg shadow-lg ${
-                          selectedUser?.id === user.id
-                            ? "bg-black/20"
-                            : "bg-gradient-to-br from-yellow-400 to-amber-300"
-                        }`}
-                      >
-                        {user.name[0].toUpperCase()}
-                      </div>
-                    </div>
-
-                    {/* User Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p
-                          className={`text-sm font-semibold truncate ${
+                        console.log("User clicked:", user.name);
+                        setSelectedUser(user);
+                        // Generate chat ID using user's customerCareId
+                        const newChatId = `${user.id}_${
+                          user.customerCareId || "admin"
+                        }`;
+                        console.log("Setting chat ID:", newChatId);
+                        setChatId(newChatId);
+                      }}
+                      className={`group flex items-center gap-5 p-5 cursor-pointer rounded-2xl mx-2 transition-all duration-300 hover:scale-[1.02] ${
+                        selectedUser?.id === user.id
+                          ? "bg-gradient-to-r from-yellow-400 to-amber-300 text-black shadow-xl transform scale-[1.02]"
+                          : "bg-white/60 hover:bg-white/80 hover:shadow-lg"
+                      }`}
+                    >
+                      {/* Avatar with online indicator */}
+                      <div className="relative">
+                        <div
+                          className={`w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-white text-xl shadow-lg ${
                             selectedUser?.id === user.id
-                              ? "text-black"
-                              : "text-gray-800"
+                              ? "bg-black/20"
+                              : "bg-gradient-to-br from-yellow-400 to-amber-300"
                           }`}
                         >
-                          {user.name}
-                        </p>
-                        <span
-                          className={`text-xs ${
+                          {user.name[0].toUpperCase()}
+                        </div>
+                      </div>
+
+                      {/* User Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p
+                            className={`text-base font-semibold truncate ${
+                              selectedUser?.id === user.id
+                                ? "text-black"
+                                : "text-gray-800"
+                            }`}
+                          >
+                            {user.name}
+                          </p>
+                          <span
+                            className={`text-xs ${
+                              selectedUser?.id === user.id
+                                ? "text-gray-700"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            {user.updatedAt
+                              ? new Date(user.updatedAt).toLocaleTimeString(
+                                  [],
+                                  {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )
+                              : ""}
+                          </span>
+                        </div>
+                        {user.branchName && (
+                          <div className="mt-1">
+                            <span className="inline-flex items-center gap-1 max-w-full text-[11px] font-medium text-yellow-900 border border-yellow-200 px-3 py-1 rounded-full shadow-sm">
+                              <span className="inline-block w-1.5 h-1.5 rounded-full bg-yellow-500"></span>
+                              <span className="truncate">
+                                {user.branchName}
+                              </span>
+                            </span>
+                          </div>
+                        )}
+                        <p
+                          className={`text-sm truncate ${
                             selectedUser?.id === user.id
                               ? "text-gray-700"
                               : "text-gray-500"
                           }`}
                         >
-                          {user.updatedAt
-                            ? new Date(user.updatedAt).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })
-                            : ""}
-                        </span>
+                          {user.lastMessage?.type === "voice"
+                            ? "🎤 Voice message"
+                            : user.lastMessage?.type === "image"
+                            ? "📷 Image"
+                            : user.lastMessage?.type === "video"
+                            ? "🎥 Video"
+                            : user.lastMessage?.text || "No messages"}
+                        </p>
                       </div>
-                      <p
-                        className={`text-xs truncate ${
-                          selectedUser?.id === user.id
-                            ? "text-gray-700"
-                            : "text-gray-500"
-                        }`}
-                      >
-                        {user.lastMessage?.type === "voice"
-                          ? "🎤 Voice message"
-                          : user.lastMessage?.type === "image"
-                          ? "📷 Image"
-                          : user.lastMessage?.type === "video"
-                          ? "🎥 Video"
-                          : user.lastMessage?.text || "No messages"}
-                      </p>
-                    </div>
 
-                    {/* Unread count */}
-                    {user.unreadCount > 0 && (
-                      <div className="flex items-center justify-center w-6 h-6 bg-gradient-to-r from-yellow-400 to-amber-300 text-black text-xs font-bold rounded-full shadow-lg animate-pulse">
-                        {user.unreadCount > 99 ? "99+" : user.unreadCount}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                      {/* Unread count */}
+                      {user.unreadCount > 0 && (
+                        <div className="flex items-center justify-center w-6 h-6 bg-gradient-to-r from-yellow-400 to-amber-300 text-black text-xs font-bold rounded-full shadow-lg animate-pulse">
+                          {user.unreadCount > 99 ? "99+" : user.unreadCount}
+                        </div>
+                      )}
+                    </div>
+                  ))}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-32 text-gray-400">
