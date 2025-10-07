@@ -188,7 +188,7 @@ const VideoForm = ({
     const thumbTypeNum = Number(form.thumbnailType);
     const typeNum = Number(form.type);
 
-    const errs = validateForm({
+    let errs = validateForm({
       // Multi-language title validation
       title_english: {
         value: form.title_english,
@@ -270,6 +270,14 @@ const VideoForm = ({
         rules: [required("Category")],
       },
     });
+    // Additional rule: Day must be >= 1 for Day wise type
+    if (typeNum === 1) {
+      const nDay = Number(String(form.day).trim());
+      if (!isNaN(nDay) && nDay <= 0) {
+        errs = { ...errs, day: "Video cannot be created for day 0" };
+      }
+    }
+
     setErrors(errs);
     if (Object.keys(errs).length) {
       // help debugging which field is blocking submit

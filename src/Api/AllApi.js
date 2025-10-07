@@ -14,6 +14,36 @@ const getAuthHeaders = () => {
   return { Authorization: `Bearer ${token}` };
 };
 
+// Global interceptor: Redirect to login on auth errors
+if (typeof window !== "undefined" && !axios.__AUTH_INTERCEPTOR_INSTALLED__) {
+  axios.__AUTH_INTERCEPTOR_INSTALLED__ = true;
+  axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      const status = error?.response?.status;
+      const message = error?.response?.data?.message || "";
+      const code =
+        error?.response?.data?.code || error?.response?.data?.errorCode;
+
+      const isAuthError =
+        status === 401 ||
+        status === 403 ||
+        /token/i.test(String(message)) ||
+        String(code).toUpperCase().includes("TOKEN");
+
+      if (isAuthError) {
+        try {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+        } catch {}
+        // Redirect to login
+        window.location.replace("/login");
+      }
+      return Promise.reject(error);
+    }
+  );
+}
+
 // Admin login
 export const loginAdmin = async (email, password) => {
   try {
