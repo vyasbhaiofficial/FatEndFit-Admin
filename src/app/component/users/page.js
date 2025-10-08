@@ -20,7 +20,7 @@ const UsersPage = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [editing, setEditing] = useState(null);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [filter, setFilter] = useState("all"); // all | active | inactive
+  const [filter, setFilter] = useState(role === "subadmin" ? "active" : "all"); // all | active | inactive | deleted
 
   const fetchList = async () => {
     try {
@@ -34,6 +34,8 @@ const UsersPage = () => {
           )
         );
         userData = chunks.flat();
+        // Subadmin only sees active users
+        userData = userData.filter((u) => !u.isDeleted);
       } else {
         const data = await getAllUsers();
         userData = Array.isArray(data) ? data : [];
@@ -55,9 +57,17 @@ const UsersPage = () => {
   const applyFilters = (list, term, status) => {
     const base = Array.isArray(list) ? list : [];
     let data = base;
-    // status filtering: active => isDeleted false, inactive => isDeleted true
-    if (status === "active") data = data.filter((u) => !u.isDeleted);
-    else if (status === "inactive") data = data.filter((u) => u.isDeleted);
+
+    // For subadmin, only show active users (already filtered in fetchList)
+    if (role === "subadmin") {
+      data = data.filter((u) => !u.isDeleted);
+    } else {
+      // Admin filtering: all | active | inactive
+      if (status === "active") data = data.filter((u) => !u.isDeleted);
+      else if (status === "inactive") data = data.filter((u) => u.isDeleted);
+      // "all" shows all users (no filtering)
+    }
+
     if (!term) return data;
     const t = term.toLowerCase();
     return data.filter(
@@ -151,11 +161,15 @@ const UsersPage = () => {
           onFilterChange={setFilter}
           searchLoading={searchLoading}
           searchPlaceholder="Search by name, patient ID, mobile, or branch..."
-          filterOptions={[
-            { label: "All Users", value: "all" },
-            { label: "Active", value: "active" },
-            { label: "Inactive", value: "inactive" },
-          ]}
+          filterOptions={
+            role === "subadmin"
+              ? [] // No filter options for subadmin
+              : [
+                  { label: "All Users", value: "all" },
+                  { label: "Active", value: "active" },
+                  { label: "Inactive", value: "inactive" },
+                ]
+          }
           filterValue={filter}
           filterLabel="Status"
         />
