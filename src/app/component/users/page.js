@@ -20,6 +20,7 @@ const UsersPage = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [editing, setEditing] = useState(null);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [filter, setFilter] = useState("all"); // all | active | inactive
 
   const fetchList = async () => {
     try {
@@ -51,31 +52,37 @@ const UsersPage = () => {
     fetchList();
   }, []);
 
+  const applyFilters = (list, term, status) => {
+    const base = Array.isArray(list) ? list : [];
+    let data = base;
+    // status filtering: active => isDeleted false, inactive => isDeleted true
+    if (status === "active") data = data.filter((u) => !u.isDeleted);
+    else if (status === "inactive") data = data.filter((u) => u.isDeleted);
+    if (!term) return data;
+    const t = term.toLowerCase();
+    return data.filter(
+      (user) =>
+        (user.name || "").toLowerCase().includes(t) ||
+        String(user.patientId || "").includes(t) ||
+        String(user.mobileNumber || "").includes(t) ||
+        `${user.mobilePrefix || ""}${user.mobileNumber || ""}`.includes(t) ||
+        (user.branch?.name || "").toLowerCase().includes(t) ||
+        (user.plan?.name || "").toLowerCase().includes(t)
+    );
+  };
+
   const handleSearch = (searchTerm) => {
     setSearchLoading(true);
 
-    if (!searchTerm) {
-      setFilteredUsers(users);
-      setSearchLoading(false);
-      return;
-    }
-
-    const term = searchTerm.toLowerCase();
-    const filtered = users.filter((user) => {
-      // Search across all fields
-      return (
-        user.name?.toLowerCase().includes(term) ||
-        user.patientId?.toString().includes(term) ||
-        user.mobileNumber?.includes(term) ||
-        `${user.mobilePrefix}${user.mobileNumber}`.includes(term) ||
-        user.branch?.name?.toLowerCase().includes(term) ||
-        user.plan?.name?.toLowerCase().includes(term)
-      );
-    });
-
+    const filtered = applyFilters(users, searchTerm, filter);
     setFilteredUsers(filtered);
     setSearchLoading(false);
   };
+
+  // React to dropdown filter changes
+  useEffect(() => {
+    setFilteredUsers(applyFilters(users, "", filter));
+  }, [filter, users]);
 
   const handleSubmit = async (formData) => {
     try {
@@ -127,32 +134,46 @@ const UsersPage = () => {
 
   return (
     <RoleGuard allow={["Admin", "subadmin"]}>
-      <div className="w-full h-full px-18">
-        <div className="flex items-center justify-between mb-4">
+      <div className="w-full h-full px-18 flex flex-col">
+        <div className="flex items-center justify-between mb-4 flex-shrink-0">
           <Header size="3xl">Users</Header>
           <Button onClick={() => setIsOpen(true)}>Create</Button>
         </div>
 
         {error && (
-          <div className="mb-3 p-3 rounded-lg bg-red-50 text-red-600 border border-red-200">
+          <div className="mb-3 p-3 rounded-lg bg-red-50 text-red-600 border border-red-200 flex-shrink-0">
             {error}
           </div>
         )}
 
-        <SearchComponent onSearch={handleSearch} loading={searchLoading} />
+        <SearchComponent
+          onSearch={handleSearch}
+          onFilterChange={setFilter}
+          searchLoading={searchLoading}
+          searchPlaceholder="Search by name, patient ID, mobile, or branch..."
+          filterOptions={[
+            { label: "All Users", value: "all" },
+            { label: "Active", value: "active" },
+            { label: "Inactive", value: "inactive" },
+          ]}
+          filterValue={filter}
+          filterLabel="Status"
+        />
 
         {!listLoading && (
-          <div className="mb-4 text-sm text-gray-600">
+          <div className="mb-4 text-sm text-gray-600 flex-shrink-0">
             Showing {filteredUsers.length} of {users.length} users
           </div>
         )}
 
-        <UserList
-          users={filteredUsers}
-          loading={listLoading}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        <div className="flex-1 min-h-0">
+          <UserList
+            users={filteredUsers}
+            loading={listLoading}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        </div>
 
         <Drawer isOpen={isOpen} onClose={() => setIsOpen(false)}>
           <div className="mb-6 text-center">

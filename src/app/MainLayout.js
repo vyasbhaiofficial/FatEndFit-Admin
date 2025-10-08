@@ -36,13 +36,13 @@ export default function MainLayout({ children }) {
   // For protected routes, wrap with AuthGuard
   return (
     <AuthGuard>
-      <div className="flex h-screen bg-[#F5F5F5]">
+      <div className="flex min-h-screen bg-[#F5F5F5]">
         <Sidebar />
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col" style={{ marginLeft: "256px" }}>
           <div className="p-4">
             <Navbar />
           </div>
-          <main className="p-4 flex-1 overflow-auto">{children}</main>
+          <main className="p-4 flex-1">{children}</main>
         </div>
       </div>
     </AuthGuard>

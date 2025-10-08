@@ -74,7 +74,9 @@ const BranchForm = ({
       if (!v) return "Mobile number is required.";
       const num = Number(v);
       if (isNaN(num)) return "Mobile number must be a valid number.";
-      if (v.length !== 10) return "Mobile number must be 10 digits.";
+      // Allow 10 or more digits
+      if (String(v).length < 10)
+        return "Mobile number must be at least 10 digits.";
       return null;
     };
     const latitudeRule = (v) => {
@@ -287,17 +289,16 @@ const BranchForm = ({
             Mobile *
           </label>
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             value={form.mobileNumber}
             onChange={(e) => {
-              const value = e.target.value;
-              if (value.length <= 10) {
-                setForm((f) => ({ ...f, mobileNumber: value }));
-              }
+              const onlyDigits = e.target.value.replace(/\D/g, "");
+              setForm((f) => ({ ...f, mobileNumber: onlyDigits }));
             }}
             className="w-full border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition"
             placeholder="9123456789"
-            maxLength={10}
           />
           {errors.mobileNumber && (
             <p className="text-red-500 text-sm mt-1">{errors.mobileNumber}</p>

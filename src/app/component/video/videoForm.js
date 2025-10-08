@@ -178,7 +178,10 @@ const VideoForm = ({
   }, []);
 
   const validate = () => {
-    const required = (label) => (v) => !v ? `${label} is required.` : null;
+    const required = (label) => (v) =>
+      v === undefined || v === null || String(v).trim() === ""
+        ? `${label} is required.`
+        : null;
     const numberRule = (label) => (v) => {
       if (v === "" || v === "ok") return null;
       const n = Number(String(v).trim());
@@ -270,13 +273,7 @@ const VideoForm = ({
         rules: [required("Category")],
       },
     });
-    // Additional rule: Day must be >= 1 for Day wise type
-    if (typeNum === 1) {
-      const nDay = Number(String(form.day).trim());
-      if (!isNaN(nDay) && nDay <= 0) {
-        errs = { ...errs, day: "Video cannot be created for day 0" };
-      }
-    }
+    // Allow day 0 as valid; remove previous restriction
 
     setErrors(errs);
     if (Object.keys(errs).length) {

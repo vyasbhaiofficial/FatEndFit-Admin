@@ -38,7 +38,7 @@ const Sidebar = () => {
     <aside
       className={`${
         isCollapsed ? "w-16" : "w-64"
-      } bg-white shadow-2xl border-r border-gray-200 flex flex-col h-screen transition-all duration-300 backdrop-blur-sm`}
+      } bg-white shadow-2xl border-r border-gray-200 flex flex-col h-screen transition-all duration-300 backdrop-blur-sm fixed left-0 top-0 z-10`}
     >
       {/* Logo + Toggle */}
       <div className="p-5 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-gray-50 to-yellow-50">
@@ -80,7 +80,7 @@ const Sidebar = () => {
       <nav
         className={`flex-1 flex flex-col gap-6 ${
           isCollapsed ? "px-2" : "px-4"
-        } py-5 overflow-y-auto transition-all duration-300`}
+        } py-5 transition-all duration-300`}
       >
         {/* Section: Main */}
         <div>

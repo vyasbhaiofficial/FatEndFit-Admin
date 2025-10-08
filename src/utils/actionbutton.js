@@ -3,7 +3,7 @@
 
 import { FiEdit, FiTrash2, FiClock } from "react-icons/fi";
 
-export const ActionButton = ({ type = "edit", onClick }) => {
+export const ActionButton = ({ type = "edit", onClick, disabled = false }) => {
   const isEdit = type === "edit";
   const isDelete = type === "delete";
 
@@ -18,11 +18,16 @@ export const ActionButton = ({ type = "edit", onClick }) => {
 
   return (
     <button
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
+      aria-disabled={disabled}
       className={`${bgGradient} text-white rounded-full 
                  w-10 h-10 inline-flex items-center justify-center 
                  shadow-lg hover:shadow-xl 
-                 transition-transform duration-300 transform hover:-translate-y-1`}
+                 transition-transform duration-300 transform ${
+                   disabled
+                     ? "opacity-50 cursor-not-allowed"
+                     : "hover:-translate-y-1"
+                 }`}
     >
       <Icon size={24} />
     </button>

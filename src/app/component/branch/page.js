@@ -12,6 +12,7 @@ import {
 } from "@/Api/AllApi";
 import BranchForm from "./branchForm";
 import BranchTable from "./branchTable";
+import SearchComponent from "@/components/SearchComponent";
 
 const BranchPage = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,13 +20,18 @@ const BranchPage = () => {
   const [listLoading, setListLoading] = useState(true);
   const [error, setError] = useState("");
   const [items, setItems] = useState([]);
+  const [filteredItems, setFilteredItems] = useState([]);
   const [editing, setEditing] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const fetchList = async () => {
     try {
       setListLoading(true);
       const data = await getAllBranches();
-      setItems(Array.isArray(data) ? data : []);
+      const branchData = Array.isArray(data) ? data : [];
+      setItems(branchData);
+      setFilteredItems(branchData);
     } catch (e) {
       setError(e?.response?.data?.message || "Failed to load branches");
       toast.error(e?.response?.data?.message || "Failed to load branches");
@@ -37,6 +43,30 @@ const BranchPage = () => {
   useEffect(() => {
     fetchList();
   }, []);
+
+  const handleSearch = (term) => {
+    setSearchLoading(true);
+
+    if (!term) {
+      setFilteredItems(items);
+      setSearchLoading(false);
+      return;
+    }
+
+    const filtered = items.filter((branch) => {
+      const searchTerm = term.toLowerCase();
+      return (
+        branch.name?.toLowerCase().includes(searchTerm) ||
+        branch.city?.toLowerCase().includes(searchTerm) ||
+        branch.state?.toLowerCase().includes(searchTerm) ||
+        branch.email?.toLowerCase().includes(searchTerm) ||
+        branch.pincode?.toString().includes(searchTerm)
+      );
+    });
+
+    setFilteredItems(filtered);
+    setSearchLoading(false);
+  };
 
   const handleSubmit = async (formData) => {
     try {
@@ -94,8 +124,20 @@ const BranchPage = () => {
           </div>
         )}
 
+        <SearchComponent
+          onSearch={handleSearch}
+          searchLoading={searchLoading}
+          searchPlaceholder="Search by name, city, state, email, or pincode..."
+        />
+
+        {!listLoading && (
+          <div className="mb-4 text-sm text-gray-600">
+            Showing {filteredItems.length} of {items.length} branches
+          </div>
+        )}
+
         <BranchTable
-          items={items}
+          items={filteredItems}
           loading={listLoading}
           onEdit={handleEdit}
           onDelete={handleDelete}

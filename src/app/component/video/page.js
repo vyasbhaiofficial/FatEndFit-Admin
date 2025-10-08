@@ -13,6 +13,7 @@ import {
 } from "@/Api/AllApi";
 import VideoForm from "./videoForm";
 import VideoTable from "./videoTable";
+import SearchComponent from "@/components/SearchComponent";
 
 const VideoPage = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,14 +21,18 @@ const VideoPage = () => {
   const [listLoading, setListLoading] = useState(true);
   const [error, setError] = useState("");
   const [videos, setVideos] = useState([]);
+  const [filteredVideos, setFilteredVideos] = useState([]);
   const [editing, setEditing] = useState(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [videoToDelete, setVideoToDelete] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
   const fetchList = async () => {
     try {
       setListLoading(true);
       const data = await listVideos();
-      setVideos(Array.isArray(data) ? data : []);
+      const videoData = Array.isArray(data) ? data : [];
+      setVideos(videoData);
+      setFilteredVideos(videoData);
     } catch (e) {
       setError(e?.response?.data?.message || "Failed to load videos");
       toast.error(e?.response?.data?.message || "Failed to load videos");
@@ -39,6 +44,33 @@ const VideoPage = () => {
   useEffect(() => {
     fetchList();
   }, []);
+
+  const handleSearch = (term) => {
+    setSearchLoading(true);
+
+    if (!term) {
+      setFilteredVideos(videos);
+      setSearchLoading(false);
+      return;
+    }
+
+    const filtered = videos.filter((video) => {
+      const searchTerm = term.toLowerCase();
+      return (
+        video.title_english?.toLowerCase().includes(searchTerm) ||
+        video.title_gujarati?.toLowerCase().includes(searchTerm) ||
+        video.title_hindi?.toLowerCase().includes(searchTerm) ||
+        video.description_english?.toLowerCase().includes(searchTerm) ||
+        video.description_gujarati?.toLowerCase().includes(searchTerm) ||
+        video.description_hindi?.toLowerCase().includes(searchTerm) ||
+        video.day?.toString().includes(searchTerm) ||
+        video.category?.categoryTitle?.toLowerCase().includes(searchTerm)
+      );
+    });
+
+    setFilteredVideos(filtered);
+    setSearchLoading(false);
+  };
 
   const handleSubmit = async (formData) => {
     try {
@@ -105,8 +137,30 @@ const VideoPage = () => {
           </div>
         )}
 
+        <SearchComponent
+          onSearch={handleSearch}
+          searchLoading={searchLoading}
+          searchPlaceholder="Search by title, description, day, or category..."
+          filterOptions={[
+            { label: "All Videos", value: "all" },
+            { label: "Day Wise", value: "1" },
+            { label: "Webinar/Live", value: "2" },
+            { label: "Testimonial", value: "3" },
+            { label: "Category Testimonial", value: "4" },
+            { label: "Resume Plan", value: "5" },
+          ]}
+          filterValue="all"
+          filterLabel="Type"
+        />
+
+        {!listLoading && (
+          <div className="mb-4 text-sm text-gray-600">
+            Showing {filteredVideos.length} of {videos.length} videos
+          </div>
+        )}
+
         <VideoTable
-          items={videos}
+          items={filteredVideos}
           loading={listLoading}
           onEdit={handleEdit}
           onDelete={handleDelete}

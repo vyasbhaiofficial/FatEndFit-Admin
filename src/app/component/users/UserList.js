@@ -127,7 +127,7 @@ const UserList = ({ users, loading, onEdit, onDelete, onBulkDelete }) => {
 
   return (
     <>
-      <div className="overflow-x-auto shadow-md rounded-2xl border border-gray-200 bg-white">
+      <div className="overflow-x-auto shadow-md rounded-2xl border border-gray-200 bg-white h-full">
         {selectedIds.size > 0 && (
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-amber-50">
             <p className="text-sm text-amber-800 font-semibold">
@@ -200,10 +200,13 @@ const UserList = ({ users, loading, onEdit, onDelete, onBulkDelete }) => {
 
               const planStatus = getPlanStatus();
 
+              const isDeleted = Boolean(u.isDeleted);
               return (
                 <tr
                   key={u._id}
-                  className="hover:bg-yellow-50 transition-all duration-200 cursor-pointer"
+                  className={`relative hover:bg-yellow-50 transition-all duration-200 cursor-pointer ${
+                    isDeleted ? "bg-red-50" : ""
+                  }`}
                 >
                   <td className="px-4 py-4">
                     <ThemedCheckbox
@@ -239,6 +242,7 @@ const UserList = ({ users, loading, onEdit, onDelete, onBulkDelete }) => {
                     <ActionButton
                       type="delete"
                       onClick={() => handleDeleteClick(u._id, u.name)}
+                      disabled={isDeleted}
                     />
                     <ActionButton
                       type="history"

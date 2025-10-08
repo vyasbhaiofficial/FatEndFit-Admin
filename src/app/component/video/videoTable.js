@@ -112,7 +112,7 @@ const VideoTable = ({ items, loading, onEdit, onDelete }) => {
                     </h3>
                     <div className="flex items-center gap-4 text-sm text-gray-600">
                       <span>Type: {video.type}</span>
-                      <span>Day: {video.day || "N/A"}</span>
+                      <span>Day: {video.day ?? "N/A"}</span>
                       <span>Duration: {video.videoSec || 0}s</span>
                       <span>Size: {video.videoSize || 0} MB</span>
                       {video.category && (

@@ -608,6 +608,14 @@ export const deleteVideoById = async (id) => {
   return res.data;
 };
 
+/* -------------------- DASHBOARD APIs -------------------- */
+export const getDashboardStats = async () => {
+  const res = await axios.get(`${API_BASE}/admin/dashboard/stats`, {
+    headers: getAuthHeaders(),
+  });
+  return res.data.data;
+};
+
 /* -------------------- CATEGORY APIs -------------------- */
 export const getAllCategoriesApi = async () => {
   const res = await axios.get(`${API_BASE}/admin/category/`, {
