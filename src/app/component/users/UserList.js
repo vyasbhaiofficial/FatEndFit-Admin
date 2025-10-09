@@ -7,17 +7,26 @@ import ConfirmationDialog from "@/components/ConfirmationDialog";
 
 import { useRouter } from "next/navigation";
 
-const ThemedCheckbox = ({ checked, onChange, ariaLabel }) => {
+const ThemedCheckbox = ({ checked, onChange, ariaLabel, disabled = false }) => {
   return (
-    <label className="inline-flex items-center cursor-pointer select-none">
+    <label
+      className={`inline-flex items-center select-none ${
+        disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+      }`}
+    >
       <input
         type="checkbox"
         checked={checked}
         onChange={onChange}
         aria-label={ariaLabel}
+        disabled={disabled}
         className="peer sr-only"
       />
-      <span className="w-5 h-5 rounded-md border border-yellow-400 bg-white peer-checked:bg-gradient-to-r peer-checked:from-yellow-400 peer-checked:to-amber-300 peer-checked:border-amber-400 shadow-sm flex items-center justify-center transition-all">
+      <span
+        className={`w-5 h-5 rounded-md border border-yellow-400 bg-white peer-checked:bg-gradient-to-r peer-checked:from-yellow-400 peer-checked:to-amber-300 peer-checked:border-amber-400 shadow-sm flex items-center justify-center transition-all ${
+          disabled ? "bg-gray-100 border-gray-300" : ""
+        }`}
+      >
         <svg
           className={`w-3 h-3 text-black opacity-${
             checked ? 100 : 0
@@ -84,9 +93,10 @@ const UserList = ({ users, loading, onEdit, onDelete, onBulkDelete }) => {
   };
 
   const toggleAll = () => {
+    const selectable = users.filter((u) => !u.isDeleted);
     setSelectedIds((prev) => {
-      if (prev.size === users.length) return new Set();
-      return new Set(users.map((u) => u._id));
+      if (prev.size === selectable.length) return new Set();
+      return new Set(selectable.map((u) => u._id));
     });
   };
 
@@ -147,7 +157,9 @@ const UserList = ({ users, loading, onEdit, onDelete, onBulkDelete }) => {
               <th className="px-4 py-3 text-left">
                 <ThemedCheckbox
                   checked={
-                    selectedIds.size === users.length && users.length > 0
+                    selectedIds.size ===
+                      users.filter((u) => !u.isDeleted).length &&
+                    users.filter((u) => !u.isDeleted).length > 0
                   }
                   onChange={toggleAll}
                   ariaLabel="Select all"
@@ -178,8 +190,15 @@ const UserList = ({ users, loading, onEdit, onDelete, onBulkDelete }) => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {users.map((u) => {
+              const isDeleted = Boolean(u.isDeleted);
               // Determine plan status - only Active or Hold
               const getPlanStatus = () => {
+                if (isDeleted) {
+                  return {
+                    status: "Inactive",
+                    color: "bg-red-100 text-red-700",
+                  };
+                }
                 if (!u.activated || !u.plan) {
                   return {
                     status: "No Plan",
@@ -197,10 +216,7 @@ const UserList = ({ users, loading, onEdit, onDelete, onBulkDelete }) => {
                   color: "bg-yellow-300 text-yellow-900",
                 };
               };
-
               const planStatus = getPlanStatus();
-
-              const isDeleted = Boolean(u.isDeleted);
               return (
                 <tr
                   key={u._id}
@@ -213,6 +229,7 @@ const UserList = ({ users, loading, onEdit, onDelete, onBulkDelete }) => {
                       checked={selectedIds.has(u._id)}
                       onChange={() => toggleOne(u._id)}
                       ariaLabel={`Select ${u.name}`}
+                      disabled={isDeleted}
                     />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-700 font-mono">
@@ -238,7 +255,11 @@ const UserList = ({ users, loading, onEdit, onDelete, onBulkDelete }) => {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-center space-x-2">
-                    <ActionButton type="edit" onClick={() => onEdit(u)} />
+                    <ActionButton
+                      type="edit"
+                      onClick={() => onEdit(u)}
+                      disabled={isDeleted}
+                    />
                     <ActionButton
                       type="delete"
                       onClick={() => handleDeleteClick(u._id, u.name)}

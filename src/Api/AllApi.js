@@ -609,8 +609,16 @@ export const deleteVideoById = async (id) => {
 };
 
 /* -------------------- DASHBOARD APIs -------------------- */
-export const getDashboardStats = async () => {
-  const res = await axios.get(`${API_BASE}/admin/dashboard/stats`, {
+export const getDashboardStats = async (startDate = null, endDate = null) => {
+  let url = `${API_BASE}/admin/dashboard/stats`;
+
+  // Add any provided date params (start, end, or both)
+  const params = [];
+  if (startDate) params.push(`startDate=${startDate}`);
+  if (endDate) params.push(`endDate=${endDate}`);
+  if (params.length) url += `?${params.join("&")}`;
+
+  const res = await axios.get(url, {
     headers: getAuthHeaders(),
   });
   return res.data.data;

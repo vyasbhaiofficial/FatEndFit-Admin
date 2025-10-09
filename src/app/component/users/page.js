@@ -20,7 +20,7 @@ const UsersPage = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [editing, setEditing] = useState(null);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [filter, setFilter] = useState(role === "subadmin" ? "active" : "all"); // all | active | inactive | deleted
+  const [filter, setFilter] = useState("active"); // all | active | inactive
 
   const fetchList = async () => {
     try {

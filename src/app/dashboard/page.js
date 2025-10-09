@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Users, UserCheck, Pause } from "lucide-react";
 import { getDashboardStats } from "@/Api/AllApi";
 import Loader from "@/utils/loader";
+import Dropdown from "@/utils/dropdown";
 import {
   LineChart,
   Line,
@@ -19,12 +20,76 @@ const DashboardPage = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [dateRange, setDateRange] = useState("all");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
+
+  // Initialize sensible defaults when switching to custom
+  useEffect(() => {
+    if (dateRange === "custom") {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const sevenDaysAgo = new Date(today);
+      sevenDaysAgo.setDate(today.getDate() - 7);
+      if (!customStartDate)
+        setCustomStartDate(sevenDaysAgo.toISOString().split("T")[0]);
+      if (!customEndDate) setCustomEndDate(today.toISOString().split("T")[0]);
+    }
+  }, [dateRange]);
+
+  // Calculate date range based on selection
+  const getDateRange = () => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    switch (dateRange) {
+      case "all":
+        return { startDate: null, endDate: null };
+      case "7days":
+        const sevenDaysAgo = new Date(today);
+        sevenDaysAgo.setDate(today.getDate() - 7);
+        return {
+          startDate: sevenDaysAgo.toISOString().split("T")[0],
+          endDate: today.toISOString().split("T")[0],
+        };
+      case "week":
+        const weekAgo = new Date(today);
+        weekAgo.setDate(today.getDate() - 7);
+        return {
+          startDate: weekAgo.toISOString().split("T")[0],
+          endDate: today.toISOString().split("T")[0],
+        };
+      case "month":
+        const monthAgo = new Date(today);
+        monthAgo.setDate(today.getDate() - 30);
+        return {
+          startDate: monthAgo.toISOString().split("T")[0],
+          endDate: today.toISOString().split("T")[0],
+        };
+      case "custom":
+        return {
+          startDate: customStartDate,
+          endDate: customEndDate,
+        };
+      default:
+        return { startDate: null, endDate: null };
+    }
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const data = await getDashboardStats();
+        // Guard: for custom range, wait until at least one date is selected
+        if (dateRange === "custom" && !customStartDate && !customEndDate) {
+          setLoading(false);
+          return;
+        }
+        const dateRangeData = getDateRange();
+        const data = await getDashboardStats(
+          dateRangeData.startDate || null,
+          dateRangeData.endDate || null
+        );
         setStats(data);
       } catch (err) {
         setError(
@@ -36,7 +101,7 @@ const DashboardPage = () => {
     };
 
     fetchStats();
-  }, []);
+  }, [dateRange, customStartDate, customEndDate]);
 
   if (loading) {
     return (
@@ -87,18 +152,30 @@ const DashboardPage = () => {
   const holdPercentage =
     totalPlans > 0 ? (stats.holdPlanUsers / totalPlans) * 100 : 0;
 
-  // Chart data
-  const chartData = [
-    { name: "Week 1", active: 85, hold: 15 },
-    { name: "Week 2", active: 80, hold: 20 },
-    { name: "Week 3", active: 75, hold: 25 },
-    { name: "Week 4", active: 82, hold: 18 },
-    {
-      name: "Current",
-      active: stats.activePlanUsers,
-      hold: stats.holdPlanUsers,
-    },
-  ];
+  // Chart data - using actual API data with date range context
+  const getChartData = () => {
+    const dateRangeData = getDateRange();
+    const rangeLabel =
+      dateRange === "custom"
+        ? `${dateRangeData.startDate} to ${dateRangeData.endDate}`
+        : dateRange === "7days"
+        ? "Last 7 Days"
+        : dateRange === "week"
+        ? "This Week"
+        : dateRange === "month"
+        ? "Last 30 Days"
+        : "All Time";
+
+    return [
+      {
+        name: rangeLabel,
+        active: stats.activePlanUsers,
+        hold: stats.holdPlanUsers,
+      },
+    ];
+  };
+
+  const chartData = getChartData();
 
   // Custom tooltip component
   const CustomTooltip = ({ active, payload, label }) => {
@@ -129,9 +206,51 @@ const DashboardPage = () => {
   return (
     <div className="p-8 shadow-lg rounded-xl mx-16 bg-white">
       {/* Header */}
-      <h2 className="text-3xl font-bold text-secondary mb-8">
-        Welcome Back, <span className="text-primary drop-shadow">Admin</span>
-      </h2>
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-3xl font-bold text-secondary">
+          Welcome Back, <span className="text-primary drop-shadow">Admin</span>
+        </h2>
+
+        {/* Date Range Picker */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="min-w-[200px]">
+              <Dropdown
+                options={[
+                  { label: "All Time", value: "all" },
+                  { label: "Last 7 Days", value: "7days" },
+                  { label: "This Week", value: "week" },
+                  { label: "Last 30 Days", value: "month" },
+                  { label: "Custom Range", value: "custom" },
+                ]}
+                value={dateRange}
+                onChange={setDateRange}
+                placeholder="Select range"
+              />
+            </div>
+          </div>
+
+          {dateRange === "custom" && (
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-200 focus:border-yellow-500"
+                placeholder="Start Date"
+              />
+              <span className="text-gray-500">to</span>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-200 focus:border-yellow-500"
+                placeholder="End Date"
+              />
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Cards with map() */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -156,7 +275,18 @@ const DashboardPage = () => {
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Plan Status Distribution
           </h2>
-          <p className="text-gray-600">Active vs Hold plan users over time</p>
+          <p className="text-gray-600">
+            Active vs Hold plan users for{" "}
+            {dateRange === "custom"
+              ? `${customStartDate || "?"} to ${customEndDate || "?"}`
+              : dateRange === "7days"
+              ? "Last 7 Days"
+              : dateRange === "week"
+              ? "This Week"
+              : dateRange === "month"
+              ? "Last 30 Days"
+              : "All Time"}
+          </p>
         </div>
 
         <div className="flex gap-6">

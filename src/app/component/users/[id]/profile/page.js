@@ -207,6 +207,8 @@ const UserProfilePage = () => {
     };
   };
 
+  const isDeleted = Boolean(overview?.user?.isDeleted);
+
   return (
     <RoleGuard allow={["Admin", "subadmin"]}>
       <div className="py-6 px-6 md:px-12">
@@ -475,7 +477,7 @@ const UserProfilePage = () => {
                       ) : (
                         <button
                           onClick={handleHoldPlan}
-                          disabled={planActionLoading}
+                          disabled={planActionLoading || isDeleted}
                           className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:transform-none flex items-center justify-center gap-2"
                         >
                           {planActionLoading ? (
