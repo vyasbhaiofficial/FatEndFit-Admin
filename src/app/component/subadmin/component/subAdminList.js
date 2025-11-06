@@ -1,16 +1,23 @@
 "use client";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { API_BASE } from "@/Api/AllApi";
+import { useAuth } from "@/contexts/AuthContext";
 import { ActionButton } from "@/utils/actionbutton";
 import NotFoundCard from "@/components/NotFoundCard";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
+import toast from "react-hot-toast";
+import { FiLogIn } from "react-icons/fi";
 
 const SubAdminList = ({ subAdmins, onEdit, onDelete, loading = false }) => {
+  const router = useRouter();
+  const { login } = useAuth();
   const [deleteDialog, setDeleteDialog] = useState({
     isOpen: false,
     itemId: null,
     itemName: null,
   });
+  const [loginLoading, setLoginLoading] = useState(null);
 
   const handleDeleteClick = (itemId, itemName) => {
     setDeleteDialog({
@@ -37,6 +44,38 @@ const SubAdminList = ({ subAdmins, onEdit, onDelete, loading = false }) => {
       itemId: null,
       itemName: null,
     });
+  };
+
+  const handleLoginAsSubAdmin = async (subAdmin) => {
+    try {
+      setLoginLoading(subAdmin._id);
+
+      // Use regular admin login API with subadmin credentials
+      const email = subAdmin.email;
+      const password = subAdmin.originalPassword || subAdmin.password;
+
+      if (!email || !password) {
+        throw new Error("Subadmin email/password not available");
+      }
+
+      const result = await login(email, password);
+
+      if (!result?.success) {
+        throw new Error(result?.error || "Login failed");
+      }
+
+      toast.success(`Logged in as ${subAdmin.username}`);
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Subadmin direct login error:", error);
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to login as subadmin"
+      );
+    } finally {
+      setLoginLoading(null);
+    }
   };
   if (loading) {
     return (
@@ -133,6 +172,18 @@ const SubAdminList = ({ subAdmins, onEdit, onDelete, loading = false }) => {
                         handleDeleteClick(sa._id, sa.name || "Sub Admin")
                       }
                     />
+                    <button
+                      onClick={() => handleLoginAsSubAdmin(sa)}
+                      disabled={loginLoading === sa._id}
+                      className="bg-gradient-to-tr from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white rounded-full w-10 h-10 inline-flex items-center justify-center shadow-lg hover:shadow-xl transition-transform duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      title="Login as this subadmin"
+                    >
+                      {loginLoading === sa._id ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      ) : (
+                        <FiLogIn size={20} />
+                      )}
+                    </button>
                   </td>
                 </tr>
               ))

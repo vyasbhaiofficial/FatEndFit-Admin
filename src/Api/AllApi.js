@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// export const API_BASE = "http://localhost:3002/api/v1";
-export const API_BASE = "https://backend.fatendfit.com/api/v1";
+export const API_BASE = "http://localhost:3002/api/v1";
+// export const API_BASE = "https://backend.fatendfit.com/api/v1";
 // Host base used to resolve file URLs coming from multer (e.g., uploads/..)
 export const API_HOST = API_BASE.replace(/\/?api\/?v1\/?$/, "").replace(
   /\/$/,
@@ -54,6 +54,28 @@ export const loginAdmin = async (email, password) => {
     return response.data.data;
   } catch (err) {
     console.log("Login error:", err.response?.data || err.message);
+    throw err;
+  }
+};
+
+// Admin login as subadmin (impersonate)
+// Expected endpoint: POST /admin/sub-admin/:id/login-as
+// This endpoint should accept admin's token and return subadmin's token
+export const loginAsSubAdmin = async (subAdminId) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE}/admin/sub-admin/${subAdminId}/login-as`,
+      {},
+      { headers: getAuthHeaders() }
+    );
+    // Handle different response structures
+    return response.data.data || response.data;
+  } catch (err) {
+    console.error("Login as subadmin error:", {
+      status: err?.response?.status,
+      message: err?.response?.data?.message || err.message,
+      data: err?.response?.data,
+    });
     throw err;
   }
 };
@@ -609,6 +631,59 @@ export const deleteVideoById = async (id) => {
 };
 
 /* -------------------- DASHBOARD APIs -------------------- */
+// Get logs with filters
+export const getLogs = async (params = {}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params.action) queryParams.append("action", params.action);
+    if (params.userId) queryParams.append("userId", params.userId);
+    if (params.branchId) queryParams.append("branchId", params.branchId);
+    if (params.startDate) queryParams.append("startDate", params.startDate);
+    if (params.endDate) queryParams.append("endDate", params.endDate);
+    if (params.page) queryParams.append("page", params.page);
+    if (params.limit) queryParams.append("limit", params.limit);
+
+    const response = await axios.get(
+      `${API_BASE}/admin/logs?${queryParams.toString()}`,
+      { headers: getAuthHeaders() }
+    );
+    return response.data.data;
+  } catch (err) {
+    console.log("Get logs error:", err.response?.data || err.message);
+    throw err;
+  }
+};
+
+// Track panel open
+export const trackPanelOpen = async () => {
+  try {
+    const response = await axios.post(
+      `${API_BASE}/admin/logs/panel/open`,
+      {},
+      { headers: getAuthHeaders() }
+    );
+    return response.data.data;
+  } catch (err) {
+    console.log("Track panel open error:", err.response?.data || err.message);
+    throw err;
+  }
+};
+
+// Track panel close
+export const trackPanelClose = async () => {
+  try {
+    const response = await axios.post(
+      `${API_BASE}/admin/logs/panel/close`,
+      {},
+      { headers: getAuthHeaders() }
+    );
+    return response.data.data;
+  } catch (err) {
+    console.log("Track panel close error:", err.response?.data || err.message);
+    throw err;
+  }
+};
+
 export const getDashboardStats = async (startDate = null, endDate = null) => {
   let url = `${API_BASE}/admin/dashboard/stats`;
 

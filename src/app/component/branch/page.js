@@ -112,10 +112,12 @@ const BranchPage = () => {
 
   return (
     <RoleGuard allow={["Admin"]}>
-      <div className="w-full h-full px-18">
-        <div className="flex items-center justify-between mb-4">
+      <div className="w-full h-full px-4 sm:px-6 lg:px-10 xl:px-18">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <Header size="3xl">Branches</Header>
-          <Button onClick={() => setIsOpen(true)}>Create</Button>
+          <div className="sm:shrink-0">
+            <Button onClick={() => setIsOpen(true)}>Create</Button>
+          </div>
         </div>
 
         {error && (

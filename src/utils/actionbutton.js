@@ -1,20 +1,34 @@
 // components/ui/ActionButton.jsx
 "use client";
 
-import { FiEdit, FiTrash2, FiClock } from "react-icons/fi";
+import { FiEdit, FiTrash2, FiClock, FiInfo } from "react-icons/fi";
 
 export const ActionButton = ({ type = "edit", onClick, disabled = false }) => {
   const isEdit = type === "edit";
   const isDelete = type === "delete";
+  const isHistory = type === "history";
+  const isInfo = type === "info";
 
-  const Icon = isEdit ? FiEdit : isDelete ? FiTrash2 : FiClock;
+  const Icon = isEdit
+    ? FiEdit
+    : isDelete
+    ? FiTrash2
+    : isHistory
+    ? FiClock
+    : isInfo
+    ? FiInfo
+    : FiEdit;
 
   // Colors: gradient using theme yellow/red
   const bgGradient = isEdit
     ? "bg-gradient-to-tr from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600"
     : isDelete
     ? "bg-gradient-to-tr from-red-300 to-red-600 hover:from-red-600 hover:to-red-700"
-    : "bg-gradient-to-tr from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700";
+    : isHistory
+    ? "bg-gradient-to-tr from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700"
+    : isInfo
+    ? "bg-gradient-to-tr from-green-400 to-green-600 hover:from-green-500 hover:to-green-700"
+    : "bg-gradient-to-tr from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600";
 
   return (
     <button

@@ -71,7 +71,8 @@ const BranchTable = ({ items, loading, onEdit, onDelete }) => {
 
   return (
     <>
-      <div className="overflow-x-auto shadow-md rounded-2xl border border-gray-200 bg-white">
+      {/* Desktop table */}
+      <div className="hidden md:block overflow-x-auto shadow-md rounded-2xl border border-gray-200 bg-white">
         <table className="min-w-full table-auto divide-y divide-gray-200">
           <thead className="bg-gradient-to-r from-yellow-400 to-amber-300">
             <tr>
@@ -168,6 +169,62 @@ const BranchTable = ({ items, loading, onEdit, onDelete }) => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile cards */}
+      <div className="md:hidden space-y-3">
+        {items.map((b) => (
+          <div
+            key={b._id}
+            className="bg-white rounded-2xl shadow-md border border-gray-200 p-4"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-base font-semibold text-gray-900">
+                  {b.name}
+                </div>
+                <div className="text-sm text-gray-700 mt-1 whitespace-pre-wrap break-words">
+                  {normalizeAddress(b.address)}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <ActionButton type="edit" onClick={() => onEdit(b)} />
+                <ActionButton
+                  type="delete"
+                  onClick={() => handleDeleteClick(b._id, b.name || "Branch")}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mt-3 text-sm">
+              <div>
+                <div className="text-gray-500">City</div>
+                <div className="text-gray-800 font-medium">{b.city}</div>
+              </div>
+              <div>
+                <div className="text-gray-500">State</div>
+                <div className="text-gray-800 font-medium">{b.state}</div>
+              </div>
+              <div>
+                <div className="text-gray-500">Pincode</div>
+                <div className="text-gray-800 font-medium">{b.pincode}</div>
+              </div>
+              <div>
+                <div className="text-gray-500">Email</div>
+                <div className="text-gray-800 font-medium">
+                  {b.email || "-"}
+                </div>
+              </div>
+              <div>
+                <div className="text-gray-500">Updated</div>
+                <div className="text-gray-800 font-medium">
+                  {b.updatedAt
+                    ? new Date(b.updatedAt).toLocaleDateString()
+                    : "-"}
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Delete Confirmation Dialog */}

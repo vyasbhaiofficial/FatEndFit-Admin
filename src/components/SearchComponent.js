@@ -12,6 +12,14 @@ const SearchComponent = ({
   filterOptions = [],
   filterValue = "",
   filterLabel = "Filter",
+  // Additional filters
+  planOptions = [],
+  selectedPlan = "",
+  onPlanChange = () => {},
+  selectedDate = "",
+  onDateChange = () => {},
+  planHistoryFilter = "",
+  onPlanHistoryFilterChange = () => {},
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -73,7 +81,7 @@ const SearchComponent = ({
 
         {/* Filter Dropdown */}
         {filterOptions.length > 0 && (
-          <div className="sm:w-64">
+          <div className="sm:w-48">
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               {filterLabel}
             </label>
@@ -86,6 +94,68 @@ const SearchComponent = ({
           </div>
         )}
       </div>
+
+      {/* Additional Filters Grid */}
+      {(planOptions.length > 0 || planHistoryFilter !== undefined) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-200">
+          {/* Plan Filter */}
+          {planOptions.length > 0 && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Filter by Plan
+              </label>
+              <Dropdown
+                options={[{ label: "All Plans", value: "" }, ...planOptions]}
+                value={selectedPlan}
+                onChange={onPlanChange}
+              />
+            </div>
+          )}
+
+          {/* Plan History Filter */}
+          {planHistoryFilter !== undefined && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Plan History
+              </label>
+              <Dropdown
+                options={[
+                  { label: "All Users", value: "" },
+                  { label: "Only One Plan", value: "one" },
+                  { label: "Upgraded Plan", value: "upgraded" },
+                ]}
+                value={planHistoryFilter}
+                onChange={onPlanHistoryFilterChange}
+              />
+            </div>
+          )}
+
+          {/* Date Filter */}
+          {onDateChange && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Filter by Date
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => onDateChange(e.target.value)}
+                  className="flex-1 border border-yellow-400 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition text-sm"
+                />
+                {selectedDate && (
+                  <button
+                    onClick={() => onDateChange("")}
+                    className="px-4 py-3 bg-gray-200 hover:bg-gray-300 rounded-xl text-sm font-semibold text-gray-700 transition whitespace-nowrap"
+                  >
+                    Clear Date
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Search Results Indicator */}
       {searchTerm && (

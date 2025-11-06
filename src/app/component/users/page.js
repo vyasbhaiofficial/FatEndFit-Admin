@@ -3,10 +3,16 @@ import React, { useEffect, useState } from "react";
 import RoleGuard from "@/components/RoleGuard";
 import { Header, Button } from "@/utils/header";
 import Drawer from "@/utils/formanimation";
-import { createUserApi, getAllUsers, updateUserById } from "@/Api/AllApi";
+import {
+  createUserApi,
+  getAllUsers,
+  updateUserById,
+  getAllPlans,
+} from "@/Api/AllApi";
 import UserForm from "./UserForm";
 import UserList from "./UserList";
 import SearchComponent from "@/components/SearchComponent";
+import Dropdown from "@/utils/dropdown";
 import toast from "react-hot-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -21,6 +27,11 @@ const UsersPage = () => {
   const [editing, setEditing] = useState(null);
   const [searchLoading, setSearchLoading] = useState(false);
   const [filter, setFilter] = useState("active"); // all | active | inactive
+  const [selectedPlan, setSelectedPlan] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [planHistoryFilter, setPlanHistoryFilter] = useState(""); // "" | "one" | "upgraded"
+  const [plans, setPlans] = useState([]);
+  const [userPlanHistoryMap, setUserPlanHistoryMap] = useState({}); // userId -> planHistory count
 
   const fetchList = async () => {
     try {
@@ -52,9 +63,46 @@ const UsersPage = () => {
 
   useEffect(() => {
     fetchList();
+    // Fetch plans for filter
+    const fetchPlans = async () => {
+      try {
+        const planList = await getAllPlans();
+        setPlans(Array.isArray(planList) ? planList : []);
+      } catch (err) {
+        console.error("Error fetching plans", err);
+      }
+    };
+    fetchPlans();
   }, []);
 
-  const applyFilters = (list, term, status) => {
+  // Fetch plan history for users when needed
+  useEffect(() => {
+    if (planHistoryFilter && users.length > 0) {
+      const fetchPlanHistory = async () => {
+        const historyMap = {};
+        // Fetch plan history for a sample of users (or all if needed)
+        // For performance, we'll check plan history only when filter is active
+        const promises = users.slice(0, 100).map(async (user) => {
+          try {
+            const { getUserOverview } = await import("@/Api/AllApi");
+            const overview = await getUserOverview(user._id);
+            const history = Array.isArray(overview?.planHistory)
+              ? overview.planHistory
+              : [];
+            historyMap[user._id] = history.length;
+          } catch (err) {
+            // If plan history fetch fails, assume 1 plan (current plan)
+            historyMap[user._id] = 1;
+          }
+        });
+        await Promise.all(promises);
+        setUserPlanHistoryMap(historyMap);
+      };
+      fetchPlanHistory();
+    }
+  }, [planHistoryFilter, users.length]);
+
+  const applyFilters = (list, term, status, planId, date, planHistoryType) => {
     const base = Array.isArray(list) ? list : [];
     let data = base;
 
@@ -68,6 +116,43 @@ const UsersPage = () => {
       // "all" shows all users (no filtering)
     }
 
+    // Filter by plan
+    if (planId) {
+      data = data.filter((u) => {
+        const userPlanId = u.plan?._id || u.plan;
+        return userPlanId === planId;
+      });
+    }
+
+    // Filter by date (createdAt)
+    if (date) {
+      const filterDate = new Date(date);
+      filterDate.setHours(0, 0, 0, 0);
+      const nextDay = new Date(filterDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+
+      data = data.filter((u) => {
+        if (!u.createdAt) return false;
+        const userDate = new Date(u.createdAt);
+        userDate.setHours(0, 0, 0, 0);
+        return userDate >= filterDate && userDate < nextDay;
+      });
+    }
+
+    // Filter by plan history (only one plan vs upgraded)
+    if (planHistoryType) {
+      data = data.filter((u) => {
+        const historyCount = userPlanHistoryMap[u._id] || 1; // Default to 1 if not fetched
+        if (planHistoryType === "one") {
+          return historyCount === 1; // Only one plan
+        } else if (planHistoryType === "upgraded") {
+          return historyCount > 1; // Multiple plans (upgraded)
+        }
+        return true;
+      });
+    }
+
+    // Search term filter
     if (!term) return data;
     const t = term.toLowerCase();
     return data.filter(
@@ -84,15 +169,38 @@ const UsersPage = () => {
   const handleSearch = (searchTerm) => {
     setSearchLoading(true);
 
-    const filtered = applyFilters(users, searchTerm, filter);
+    const filtered = applyFilters(
+      users,
+      searchTerm,
+      filter,
+      selectedPlan,
+      selectedDate,
+      planHistoryFilter
+    );
     setFilteredUsers(filtered);
     setSearchLoading(false);
   };
 
-  // React to dropdown filter changes
+  // React to filter changes
   useEffect(() => {
-    setFilteredUsers(applyFilters(users, "", filter));
-  }, [filter, users]);
+    setFilteredUsers(
+      applyFilters(
+        users,
+        "",
+        filter,
+        selectedPlan,
+        selectedDate,
+        planHistoryFilter
+      )
+    );
+  }, [
+    filter,
+    selectedPlan,
+    selectedDate,
+    planHistoryFilter,
+    users,
+    userPlanHistoryMap,
+  ]);
 
   const handleSubmit = async (formData) => {
     try {
@@ -156,23 +264,32 @@ const UsersPage = () => {
           </div>
         )}
 
-        <SearchComponent
-          onSearch={handleSearch}
-          onFilterChange={setFilter}
-          searchLoading={searchLoading}
-          searchPlaceholder="Search by name, patient ID, mobile, or branch..."
-          filterOptions={
-            role === "subadmin"
-              ? [] // No filter options for subadmin
-              : [
-                  { label: "All Users", value: "all" },
-                  { label: "Active", value: "active" },
-                  { label: "Inactive", value: "inactive" },
-                ]
-          }
-          filterValue={filter}
-          filterLabel="Status"
-        />
+        <div className="mb-4 flex-shrink-0">
+          <SearchComponent
+            onSearch={handleSearch}
+            onFilterChange={setFilter}
+            searchLoading={searchLoading}
+            searchPlaceholder="Search by name, patient ID, mobile, or branch..."
+            filterOptions={
+              role === "subadmin"
+                ? [] // No filter options for subadmin
+                : [
+                    { label: "All Users", value: "all" },
+                    { label: "Active", value: "active" },
+                    { label: "Inactive", value: "inactive" },
+                  ]
+            }
+            filterValue={filter}
+            filterLabel="Status"
+            planOptions={plans.map((p) => ({ label: p.name, value: p._id }))}
+            selectedPlan={selectedPlan}
+            onPlanChange={setSelectedPlan}
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+            planHistoryFilter={planHistoryFilter}
+            onPlanHistoryFilterChange={setPlanHistoryFilter}
+          />
+        </div>
 
         {!listLoading && (
           <div className="mb-4 text-sm text-gray-600 flex-shrink-0">

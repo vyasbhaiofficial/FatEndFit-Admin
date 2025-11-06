@@ -1,7 +1,16 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import ThemedCheckbox from "@/components/ThemedCheckbox";
 
-const Dropdown = ({ label, options, value, onChange, disabled = false }) => {
+const Dropdown = ({
+  label,
+  options,
+  value,
+  onChange,
+  disabled = false,
+  showCheckbox = false,
+  disabledValues = [], // Array of values that should be disabled
+}) => {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -59,34 +68,54 @@ const Dropdown = ({ label, options, value, onChange, disabled = false }) => {
 
       {open && !disabled && (
         <ul className="absolute z-50 w-full mt-1 bg-white border border-yellow-400 rounded-xl shadow-lg overflow-hidden animate-fade-in">
-          {options.map((opt, idx) => (
-            <li
-              key={idx}
-              onClick={() => {
-                onChange(opt.value);
-                setOpen(false);
-              }}
-              className="p-3 hover:bg-yellow-100 cursor-pointer transition flex items-center justify-between"
-            >
-              <span>{opt.label}</span>
-              {value === opt.value && (
-                <svg
-                  className="w-4 h-4 text-yellow-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              )}
-            </li>
-          ))}
+          {options.map((opt, idx) => {
+            const isOptionDisabled = disabledValues.includes(opt.value);
+            return (
+              <li
+                key={idx}
+                onClick={() => {
+                  if (isOptionDisabled) return;
+                  onChange(opt.value);
+                  setOpen(false);
+                }}
+                className={`p-3 transition flex items-center justify-between ${
+                  isOptionDisabled
+                    ? "opacity-50 cursor-not-allowed bg-gray-50"
+                    : "hover:bg-yellow-100 cursor-pointer"
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  {showCheckbox && (
+                    <ThemedCheckbox
+                      checked={value === opt.value}
+                      onChange={() => {}}
+                      ariaLabel={`${label || "Option"} ${opt.label}`}
+                      disabled={isOptionDisabled}
+                    />
+                  )}
+                  <span className={isOptionDisabled ? "text-gray-400" : ""}>
+                    {opt.label}
+                  </span>
+                </span>
+                {!showCheckbox && value === opt.value && (
+                  <svg
+                    className="w-4 h-4 text-yellow-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

@@ -6,6 +6,7 @@ import { ActionButton } from "@/utils/actionbutton";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
 
 import { useRouter } from "next/navigation";
+import { getUserOverview } from "@/Api/AllApi";
 
 const ThemedCheckbox = ({ checked, onChange, ariaLabel, disabled = false }) => {
   return (
@@ -55,6 +56,10 @@ const UserList = ({ users, loading, onEdit, onDelete, onBulkDelete }) => {
   });
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyUser, setHistoryUser] = useState(null);
+  const [planHistory, setPlanHistory] = useState([]);
 
   const handleDeleteClick = (userId, userName) => {
     setDeleteDialog({
@@ -115,6 +120,21 @@ const UserList = ({ users, loading, onEdit, onDelete, onBulkDelete }) => {
     }
     setSelectedIds(new Set());
     setBulkDialogOpen(false);
+  };
+
+  const openHistory = async (user) => {
+    try {
+      setHistoryUser(user);
+      setHistoryOpen(true);
+      setHistoryLoading(true);
+      const data = await getUserOverview(user._id);
+      const list = Array.isArray(data?.planHistory) ? data.planHistory : [];
+      setPlanHistory(list);
+    } catch (e) {
+      setPlanHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
   };
   if (loading) {
     return (
@@ -266,10 +286,14 @@ const UserList = ({ users, loading, onEdit, onDelete, onBulkDelete }) => {
                       disabled={isDeleted}
                     />
                     <ActionButton
-                      type="history"
+                      type="info"
                       onClick={() =>
                         router.push(`/component/users/${u._id}/profile`)
                       }
+                    />
+                    <ActionButton
+                      type="history"
+                      onClick={() => openHistory(u)}
                     />
                   </td>
                 </tr>
@@ -302,6 +326,75 @@ const UserList = ({ users, loading, onEdit, onDelete, onBulkDelete }) => {
         cancelText="Cancel"
         type="danger"
       />
+
+      {/* Plan History Modal */}
+      {historyOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white w-[92%] sm:w-[600px] max-h-[80vh] rounded-2xl shadow-2xl border border-yellow-200 overflow-hidden">
+            <div className="px-5 py-4 bg-gradient-to-r from-yellow-50 to-amber-50 border-b border-yellow-200 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-gray-800">
+                  Plan History
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {historyUser?.name} • {historyUser?.patientId}
+                </p>
+              </div>
+              <button
+                className="text-gray-600 hover:text-gray-900"
+                onClick={() => setHistoryOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-4 overflow-y-auto" style={{ maxHeight: "60vh" }}>
+              {historyLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader />
+                </div>
+              ) : planHistory.length === 0 ? (
+                <NotFoundCard
+                  title="No Plan History"
+                  subtitle="This user has no recorded plan changes."
+                />
+              ) : (
+                <div className="space-y-3">
+                  {planHistory.map((h) => (
+                    <div
+                      key={h._id}
+                      className="flex items-center justify-between rounded-xl bg-amber-100 border border-amber-200 shadow p-3"
+                    >
+                      <div>
+                        <div className="font-semibold text-gray-800">
+                          {h.plan?.name || "Plan"}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {h.plan?.days ? `${h.plan.days} days` : ""}
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {h.createdAt
+                          ? new Date(h.createdAt).toLocaleString()
+                          : "-"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="px-5 py-3 bg-gray-50 border-t border-gray-200 flex justify-end">
+              <button
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-xl font-semibold"
+                onClick={() => setHistoryOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

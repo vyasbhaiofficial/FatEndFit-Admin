@@ -130,7 +130,7 @@ const BranchForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label className="block mb-1 font-semibold text-gray-700">Name</label>
           <input
@@ -171,7 +171,7 @@ const BranchForm = ({
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <div>
           <label className="block mb-1 font-semibold text-gray-700">City</label>
           <input
@@ -223,7 +223,7 @@ const BranchForm = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label className="block mb-1 font-semibold text-gray-700">
             Latitude <span className="text-gray-500 text-sm">(Optional)</span>
@@ -266,7 +266,7 @@ const BranchForm = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label className="block mb-1 font-semibold text-gray-700">
             Prefix
@@ -284,7 +284,7 @@ const BranchForm = ({
             <p className="text-red-500 text-sm mt-1">{errors.mobilePrefix}</p>
           )}
         </div>
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <label className="block mb-1 font-semibold text-gray-700">
             Mobile *
           </label>

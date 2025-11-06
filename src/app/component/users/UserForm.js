@@ -99,6 +99,14 @@ const UserForm = ({
     .filter((b) => (role === "subadmin" ? myBranches.includes(b._id) : true))
     .map((b) => ({ label: b.name, value: b._id }));
 
+  // Get the original plan ID when editing (to disable it)
+  const originalPlanId =
+    initialValues?.plan?._id || initialValues?.plan || null;
+
+  // Disable the currently selected plan when updating
+  const disabledPlanValues =
+    initialValues && originalPlanId ? [originalPlanId] : [];
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {/* Name */}
@@ -171,12 +179,23 @@ const UserForm = ({
       <div>
         <Dropdown
           label="Plan"
-          options={plans.map((p) => ({ label: p.name, value: p._id }))}
+          options={plans.map((p) => ({
+            label: p.name,
+            value: p._id,
+            disabled: disabledPlanValues.includes(p._id),
+          }))}
           value={form.planId}
           onChange={(val) => setForm((f) => ({ ...f, planId: val }))}
+          showCheckbox
+          disabledValues={disabledPlanValues}
         />
         {errors.planId && (
           <p className="text-amber-600 text-sm mt-1">{errors.planId}</p>
+        )}
+        {initialValues && originalPlanId && (
+          <p className="text-gray-500 text-xs mt-1">
+            Current plan is disabled. Select a different plan to update.
+          </p>
         )}
       </div>
 

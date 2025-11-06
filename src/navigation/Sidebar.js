@@ -13,6 +13,7 @@ import {
   MdVideoLibrary,
   MdQuiz,
   MdSettings,
+  MdHistory,
 } from "react-icons/md";
 import { MdChevronLeft, MdChevronRight } from "react-icons/md";
 import { FiMessageCircle } from "react-icons/fi";
@@ -206,6 +207,13 @@ const Sidebar = () => {
             >
               <MdSettings size={20} />
               {!isCollapsed && <span>App Settings</span>}
+            </Link>
+            <Link
+              href="/component/logs"
+              className={linkClasses("/component/logs")}
+            >
+              <MdHistory size={20} />
+              {!isCollapsed && <span>Logs</span>}
             </Link>
           </div>
         )}
