@@ -20,11 +20,16 @@ export const metadata = {
     "Body Detoxification Admin Panel - Manage your fitness and wellness platform",
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "32x32", type: "image/x-icon" },
+      { url: "/favicon.ico", sizes: "any", type: "image/x-icon" },
       { url: "/favicon.ico", sizes: "16x16", type: "image/x-icon" },
+      { url: "/favicon.ico", sizes: "32x32", type: "image/x-icon" },
+      { url: "/favicon.ico", sizes: "48x48", type: "image/x-icon" },
+      { url: "/favicon.ico", sizes: "64x64", type: "image/x-icon" },
+      { url: "/favicon.ico", sizes: "96x96", type: "image/x-icon" },
+      { url: "/favicon.ico", sizes: "128x128", type: "image/x-icon" },
     ],
     shortcut: "/favicon.ico",
-    apple: "/favicon.ico",
+    apple: [{ url: "/favicon.ico", sizes: "180x180", type: "image/x-icon" }],
   },
 };
 
@@ -32,6 +37,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
+        <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="any" />
+        <link
+          rel="icon"
+          href="/favicon.ico"
+          type="image/x-icon"
+          sizes="16x16"
+        />
         <link
           rel="icon"
           href="/favicon.ico"
@@ -42,10 +54,28 @@ export default function RootLayout({ children }) {
           rel="icon"
           href="/favicon.ico"
           type="image/x-icon"
-          sizes="16x16"
+          sizes="48x48"
         />
-        <link rel="shortcut icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" href="/favicon.ico" />
+        <link
+          rel="icon"
+          href="/favicon.ico"
+          type="image/x-icon"
+          sizes="64x64"
+        />
+        <link
+          rel="icon"
+          href="/favicon.ico"
+          type="image/x-icon"
+          sizes="96x96"
+        />
+        <link
+          rel="icon"
+          href="/favicon.ico"
+          type="image/x-icon"
+          sizes="128x128"
+        />
+        <link rel="shortcut icon" href="/favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" href="/favicon.ico" sizes="180x180" />
         <meta name="theme-color" content="#fbbf24" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
