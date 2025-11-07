@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import Sidebar from "../navigation/Sidebar";
 import Navbar from "../navigation/Navbar";
@@ -12,6 +12,7 @@ import { trackPanelOpen, trackPanelClose, API_BASE } from "@/Api/AllApi";
 export default function MainLayout({ children }) {
   const pathname = usePathname();
   const { isAuthenticated, loading } = useAuth();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Track panel open/close with refresh detection
   useEffect(() => {
@@ -125,8 +126,11 @@ export default function MainLayout({ children }) {
   return (
     <AuthGuard>
       <div className="flex min-h-screen bg-[#F5F5F5]">
-        <Sidebar />
-        <div className="flex-1 flex flex-col" style={{ marginLeft: "256px" }}>
+        <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+        <div
+          className="flex-1 flex flex-col transition-all duration-300"
+          style={{ marginLeft: isCollapsed ? "64px" : "256px" }}
+        >
           <div className="p-4">
             <Navbar />
           </div>

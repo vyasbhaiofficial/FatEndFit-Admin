@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Users, UserCheck, Pause } from "lucide-react";
+import { Users, UserCheck, Pause, Star, TrendingUp } from "lucide-react";
 import { getDashboardStats } from "@/Api/AllApi";
 import Loader from "@/utils/loader";
 import Dropdown from "@/utils/dropdown";
@@ -143,6 +143,18 @@ const DashboardPage = () => {
       icon: <Pause className="w-10 h-10 text-white" />,
       bg: "bg-gradient-to-r from-yellow-500 to-orange-500",
     },
+    {
+      title: "Only One Plan",
+      value: stats.usersWithOnePlan || 0,
+      icon: <Star className="w-10 h-10 text-white" />,
+      bg: "bg-gradient-to-r from-amber-800 to-gray-800",
+    },
+    {
+      title: "Upgraded Plan",
+      value: stats.usersWithUpgradedPlan || 0,
+      icon: <TrendingUp className="w-10 h-10 text-white" />,
+      bg: "bg-gradient-to-r from-amber-500 to-amber-600",
+    },
   ];
 
   // Calculate percentages for chart
@@ -253,7 +265,7 @@ const DashboardPage = () => {
       </div>
 
       {/* Cards with map() */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
         {dashboardData.map((item, index) => (
           <div
             key={index}

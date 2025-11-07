@@ -1,5 +1,4 @@
 "use client";
-import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
@@ -21,8 +20,7 @@ import { FiMessageCircle } from "react-icons/fi";
 import { useAuth } from "../contexts/AuthContext";
 import Image from "next/image";
 
-const Sidebar = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const pathname = usePathname();
   const { role } = useAuth();
 
@@ -49,7 +47,7 @@ const Sidebar = () => {
               <div className=""></div>
               <div className="relative">
                 <Image
-                  src="/image/logo.png"
+                  src="/image/logo1.png"
                   alt="fatEndfit Logo"
                   width={150}
                   height={50}
