@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import TimeButton from "@/utils/timebutton";
 import { validateForm } from "@/utils/validation";
-import { getAllBranches, getAllPlans } from "@/Api/AllApi";
+import { getAllBranches, getAllPlans, getUserOverview } from "@/Api/AllApi";
 import { useAuth } from "@/contexts/AuthContext";
 import Dropdown from "@/utils/dropdown";
 
@@ -24,6 +24,7 @@ const UserForm = ({
   const [errors, setErrors] = useState({});
   const [branches, setBranches] = useState([]);
   const [plans, setPlans] = useState([]);
+  const [planHistory, setPlanHistory] = useState([]);
 
   // Fetch branches & plans
   useEffect(() => {
@@ -53,6 +54,23 @@ const UserForm = ({
         planId: initialValues.plan?._id || initialValues.plan || "",
       });
       setErrors({});
+
+      // Fetch plan history when editing to disable all previously assigned plans
+      const fetchPlanHistory = async () => {
+        try {
+          if (initialValues._id) {
+            const overview = await getUserOverview(initialValues._id);
+            const history = Array.isArray(overview?.planHistory)
+              ? overview.planHistory
+              : [];
+            setPlanHistory(history);
+          }
+        } catch (err) {
+          console.error("Error fetching plan history:", err);
+          setPlanHistory([]);
+        }
+      };
+      fetchPlanHistory();
     } else {
       setForm({
         name: "",
@@ -65,6 +83,7 @@ const UserForm = ({
         planId: "",
       });
       setErrors({});
+      setPlanHistory([]);
     }
   }, [initialValues, role, myBranches]);
 
@@ -99,13 +118,31 @@ const UserForm = ({
     .filter((b) => (role === "subadmin" ? myBranches.includes(b._id) : true))
     .map((b) => ({ label: b.name, value: b._id }));
 
-  // Get the original plan ID when editing (to disable it)
-  const originalPlanId =
-    initialValues?.plan?._id || initialValues?.plan || null;
+  // Get all plan IDs from plan history (all previously assigned plans)
+  const getAllAssignedPlanIds = () => {
+    const planIds = new Set();
 
-  // Disable the currently selected plan when updating
-  const disabledPlanValues =
-    initialValues && originalPlanId ? [originalPlanId] : [];
+    // Add current plan if exists
+    const currentPlanId = initialValues?.plan?._id || initialValues?.plan;
+    if (currentPlanId) {
+      planIds.add(currentPlanId);
+    }
+
+    // Add all plans from plan history
+    if (Array.isArray(planHistory)) {
+      planHistory.forEach((historyItem) => {
+        const planId = historyItem?.plan?._id || historyItem?.plan;
+        if (planId) {
+          planIds.add(planId);
+        }
+      });
+    }
+
+    return Array.from(planIds);
+  };
+
+  // Disable all previously assigned plans when updating
+  const disabledPlanValues = initialValues ? getAllAssignedPlanIds() : [];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -192,9 +229,9 @@ const UserForm = ({
         {errors.planId && (
           <p className="text-amber-600 text-sm mt-1">{errors.planId}</p>
         )}
-        {initialValues && originalPlanId && (
+        {initialValues && disabledPlanValues.length > 0 && (
           <p className="text-gray-500 text-xs mt-1">
-            Current plan is disabled. Select a different plan to update.
+            Previously assigned plans are disabled. Select a new plan to update.
           </p>
         )}
       </div>
